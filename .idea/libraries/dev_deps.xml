@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="dev-deps">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/.rush/dev-deps" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/.rush/dev-deps" recursive="false" />
+  </library>
+</component>

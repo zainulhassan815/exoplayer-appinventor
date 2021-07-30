@@ -1,0 +1,47 @@
+# For a detailed info on this file and supported fields, check
+# out this link: https://github.com/ShreyashSaitwal/rush-cli/wiki/Metadata-File
+
+---
+name: Exoplayer           # Caution: DO NOT change the name.
+description: Extension component for Exoplayer. Created using Rush.
+
+version:
+  number: auto        # Auto increments version number when built with '-r' ('--release') flag.
+  name: '1.0'
+
+authors:
+  - Zain Ul Hassan
+
+min_sdk: 16
+
+build:
+  # If enabled, you will be able to use Java 8 language features in your extension.
+  desugar:
+    enable: true
+    desugar_deps: true
+
+  kotlin:
+    enable: true
+
+  # Optimizes your extension on every release build.
+  release:
+    optimize: true
+
+assets:
+  # Extension icon
+  icon: icon.png
+
+  # Extension asset(s)
+  # other:
+  #   - my_awesome_asset.anything
+
+# Dependencies declared here should be present in the "deps" directory.
+deps:
+  - exoplayer-common-2.14.1.jar
+  - exoplayer-core-2.14.1.jar
+  - exoplayer-extractor-2.14.1.jar
+  - playerview.jar
+  - guava-27.1-android.jar
+  - failureaccess-1.0.1.jar
+  - exoplayer-hls-2.14.1.jar
+  - exoplayer-dash-2.14.1.jar
