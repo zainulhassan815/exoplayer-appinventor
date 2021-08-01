@@ -200,7 +200,7 @@ class Exoplayer(container: ComponentContainer) : AndroidNonvisibleComponent(cont
                 val builder = MediaItem.Builder().setUri(path)
                 val subtitleItem: MediaItem.Subtitle?
                 if (!subtitle.isNullOrEmpty()) {
-                    subtitleItem = MediaItem.Subtitle(Uri.parse(subtitle), mimeType,language, C.SELECTION_FLAG_FORCED, )
+                    subtitleItem = MediaItem.Subtitle(Uri.parse(subtitle), mimeType,language, C.SELECTION_FLAG_DEFAULT)
                     builder.setSubtitles(arrayListOf(subtitleItem))
                 }
                 val mediaItem = builder.build()
