@@ -39,12 +39,12 @@ class Exoplayer(container: ComponentContainer) : AndroidNonvisibleComponent(cont
     private val mediaItems: ArrayList<MediaItem> = arrayListOf()
 
     companion object {
-        private const val logTag = "DreamersExoPlayer"
+        private const val LOG_TAG = "DreamersExoPlayer"
     }
 
     // On Pause
     override fun onPause() {
-        Log.v(logTag, "onPause")
+        Log.v(LOG_TAG, "onPause")
         if (Util.SDK_INT < 24) {
             releasePlayer()
         }
@@ -52,7 +52,7 @@ class Exoplayer(container: ComponentContainer) : AndroidNonvisibleComponent(cont
 
     // On Stop
     override fun onStop() {
-        Log.v(logTag, "onStop")
+        Log.v(LOG_TAG, "onStop")
         if (Util.SDK_INT >= 24) {
             releasePlayer()
         }
@@ -60,7 +60,7 @@ class Exoplayer(container: ComponentContainer) : AndroidNonvisibleComponent(cont
 
     // On Resume
     override fun onResume() {
-        Log.v(logTag, "onResume")
+        Log.v(LOG_TAG, "onResume")
         if ((Util.SDK_INT < 24 || exoplayer == null)) {
             resumePlayer()
         }
@@ -78,7 +78,7 @@ class Exoplayer(container: ComponentContainer) : AndroidNonvisibleComponent(cont
         val container: ViewGroup = layout.view as ViewGroup
         val playerView = PlayerView(context)
         if (form is ReplForm) {
-            Log.v(logTag,"createLayout | Debug mode : true")
+            Log.v(LOG_TAG, "createLayout | Debug mode : true")
             playerView.setDebugMode(true)
         }
         container.addView(playerView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
@@ -96,12 +96,12 @@ class Exoplayer(container: ComponentContainer) : AndroidNonvisibleComponent(cont
         }
         playbackListeners = null
         exoplayer = null
-        Log.v(logTag, "releasePlayer : Released = ${exoplayer == null}")
+        Log.v(LOG_TAG, "releasePlayer : Released = ${exoplayer == null}")
     }
 
     // Do basic setup for player
     private fun setupPlayer() {
-        Log.v(logTag,"Setting up player")
+        Log.v(LOG_TAG, "Setting up player")
         exoplayer = SimpleExoPlayer.Builder(context)
                 .build()
                 .also { exoplayer ->
@@ -111,7 +111,7 @@ class Exoplayer(container: ComponentContainer) : AndroidNonvisibleComponent(cont
                     exoplayer.prepare()
 
                     if (mediaItems.isNotEmpty()) {
-                        Log.v(logTag,"setupPlayer : Using previously added media items.")
+                        Log.v(LOG_TAG, "setupPlayer : Using previously added media items.")
                         exoplayer.addMediaItems(mediaItems)
                     }
 
@@ -119,39 +119,41 @@ class Exoplayer(container: ComponentContainer) : AndroidNonvisibleComponent(cont
                     playbackListeners = object : Player.Listener {
                         override fun onPlaybackStateChanged(state: Int) {
                             super.onPlaybackStateChanged(state)
-                            Log.v(logTag, "onPlaybackStateChanged : $state")
+                            Log.v(LOG_TAG, "onPlaybackStateChanged : $state")
                             OnStateChanged(state)
                         }
 
                         override fun onPlayerError(error: ExoPlaybackException) {
                             super.onPlayerError(error)
-                            Log.e(logTag, "onPlayerError : $error")
+                            Log.e(LOG_TAG, "onPlayerError : $error")
                             OnError(error.toString())
                         }
 
                         override fun onIsLoadingChanged(isLoading: Boolean) {
                             super.onIsLoadingChanged(isLoading)
-                            Log.v(logTag, "onIsLoadingChanged : $isLoading")
+                            Log.v(LOG_TAG, "onIsLoadingChanged : $isLoading")
                             OnLoadingChanged(isLoading)
                         }
 
                         override fun onVideoSizeChanged(videoSize: VideoSize) {
                             super.onVideoSizeChanged(videoSize)
-                            Log.i(logTag, "onVideoSizeChanged : $videoSize")
+                            Log.i(LOG_TAG, "onVideoSizeChanged : $videoSize")
                             OnVideoSizeChanged(videoSize.width, videoSize.height, videoSize.pixelWidthHeightRatio, videoSize.unappliedRotationDegrees)
                         }
 
                         override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
                             super.onDeviceVolumeChanged(volume, muted)
-                            Log.v(logTag, "onDeviceVolumeChanged : Volume = $volume | Muted : $muted")
+                            Log.v(LOG_TAG, "onDeviceVolumeChanged : Volume = $volume | Muted : $muted")
                             OnVolumeChanged(volume, muted)
                         }
 
                         override fun onRenderedFirstFrame() {
                             super.onRenderedFirstFrame()
-                            Log.v(logTag, "onRenderedFirstFrame")
+                            Log.v(LOG_TAG, "onRenderedFirstFrame")
                             OnRenderFirstFrame()
                         }
+
+
                     }
 
                     // Add Listeners to player
@@ -166,15 +168,27 @@ class Exoplayer(container: ComponentContainer) : AndroidNonvisibleComponent(cont
     }
 
     // Play Video
-    @SimpleFunction(description = "Play video")
+    @SimpleFunction(description = "Play media")
     fun Play() {
         exoplayer?.play()
     }
 
     // Pause Video
-    @SimpleFunction(description = "Pause video")
+    @SimpleFunction(description = "Pause media")
     fun Pause() {
         exoplayer?.pause()
+    }
+
+    // Stop video
+    @SimpleFunction(description = "Stop media.")
+    fun Stop() {
+        exoplayer?.stop()
+    }
+
+    // Seek to
+    @SimpleFunction(description = "Seek media to given position.")
+    fun SeekTo(position: Long) {
+        exoplayer?.seekTo(position.toLong())
     }
 
     // Play when ready
@@ -199,7 +213,7 @@ class Exoplayer(container: ComponentContainer) : AndroidNonvisibleComponent(cont
                 val builder = MediaItem.Builder().setUri(path)
                 val subtitleItem: MediaItem.Subtitle?
                 if (!subtitle.isNullOrEmpty()) {
-                    subtitleItem = MediaItem.Subtitle(Uri.parse(subtitle), mimeType,language, C.SELECTION_FLAG_DEFAULT)
+                    subtitleItem = MediaItem.Subtitle(Uri.parse(subtitle), mimeType, language, C.SELECTION_FLAG_DEFAULT)
                     builder.setSubtitles(arrayListOf(subtitleItem))
                 }
                 val mediaItem = builder.build()
@@ -207,14 +221,14 @@ class Exoplayer(container: ComponentContainer) : AndroidNonvisibleComponent(cont
                 exoplayer?.addMediaItem(mediaItem)
             } else throw Exception("Path is null or empty")
         } catch (e: Exception) {
-            Log.e(logTag, "AddMedia : Error = $e")
+            Log.e(LOG_TAG, "AddMedia : Error = $e")
             OnError("AddMedia : Error = $e")
         }
     }
 
     // Remove Media Item at index
     @SimpleFunction(description = "Remove media item at a specific index")
-    fun RemoveMedia(index:Int) {
+    fun RemoveMedia(index: Int) {
         exoplayer?.removeMediaItem(index)
         mediaItems.removeAt(index)
     }
