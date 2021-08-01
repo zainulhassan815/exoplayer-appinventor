@@ -1,6 +1,25 @@
-## Exoplayer
+![Exoplayer](./docs/223027282_352756469622878_8637698510781519250_n.png)
 
-An App Inventor 2 extension created using Rush.
+## Exoplayer For AppInventor
+A better free video player such as Google’s Exoplayer has always been missing from AppInventor based platforms. But now its here and its free and open source.
+
+***
+
+## Docs
+
+You can read complete docs at following urls :
+
+[Kodular Community](https://community.kodular.io/t/free-os-exoplayer-for-appinventor-play-media-with-googles-exoplayer/135575)
+
+[Appzard Community](https://community.appzard.com/t/free-os-exoplayer-for-appinventor-play-media-with-googles-exoplayer/497)
+
+***
+
+## Downloads
+
+[AIX FILE](./aix/)
+
+[AIA FILE](./aix/)
 
 ***
 

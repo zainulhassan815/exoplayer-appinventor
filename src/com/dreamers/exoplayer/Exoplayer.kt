@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.util.MimeTypes
 import com.google.android.exoplayer2.util.Util
 import com.google.android.exoplayer2.video.VideoSize
 import com.google.appinventor.components.annotations.SimpleEvent
