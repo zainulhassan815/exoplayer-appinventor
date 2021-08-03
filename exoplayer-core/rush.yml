@@ -9,6 +9,8 @@ version:
   number: auto        # Auto increments version number when built with '-r' ('--release') flag.
   name: '1.0'
 
+min_sdk: 16
+
 authors:
   - Zain Ul Hassan
 

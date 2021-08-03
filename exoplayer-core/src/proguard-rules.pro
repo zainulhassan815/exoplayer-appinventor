@@ -20,9 +20,9 @@
 -dontwarn com.google.common.**
 
 -keepnames class com.google.android.exoplayer2**
--keepclassmembernames class com.google.android.exoplayer2** {
-    public static *;
-}
+#-keepclassmembernames class com.google.android.exoplayer2** {
+#    public static *;
+#}
 -keep class com.google.android.exoplayer2.ui** {
     *;
 }
