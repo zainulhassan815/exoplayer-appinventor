@@ -163,26 +163,10 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         isPlayerInitialized = exoplayer != null
     }
 
-    // Create a layout to show video using a texture view
-    private fun createLayout(layout: HVArrangement): TextureView {
-        val container: ViewGroup = layout.view as ViewGroup
-        val textureView = TextureView(context)
-        container.addView(
-            textureView,
-            ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-        )
-        return textureView
-    }
-
     // Get exoplayer instance
     @SimpleFunction(description = "Get Exoplayer instance to use in exoplayer ui")
     fun GetPlayer() : Any? = exoplayer
 
-    @SimpleFunction(description = "Create Exoplayer in an arrangement and use custom controls.")
-    fun CreateCustomPlayer(layout: HVArrangement) {
-        surface = createLayout(layout)
-        setupPlayer()
-    }
 
     @SimpleFunction(description = "Create Exoplayer.")
     fun CreatePlayer() {
