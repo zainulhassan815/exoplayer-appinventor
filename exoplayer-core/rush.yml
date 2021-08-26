@@ -46,4 +46,4 @@ deps:
   - failureaccess-1.0.1.jar
   - exoplayer-hls-2.14.1.jar
   - exoplayer-dash-2.14.1.jar
-  - playerview-2.0.1.jar
+  - playerview-1.0.1.jar

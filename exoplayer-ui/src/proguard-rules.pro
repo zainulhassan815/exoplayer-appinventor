@@ -14,6 +14,8 @@
 -flattenpackagehierarchy
 -dontpreverify
 
+-libraryjars
+
 # Don't warn about checkerframework and Kotlin annotations
 -dontwarn org.checkerframework.**
 -dontwarn kotlin.annotations.jvm.**
