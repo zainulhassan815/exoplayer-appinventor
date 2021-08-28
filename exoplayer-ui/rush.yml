@@ -3,20 +3,20 @@
 
 ---
 name: ExoplayerUi           # Caution: DO NOT change the name.
-description: Extension component for ExoplayerUi. Created using Rush.
+description: A rewrite of exoplayer's ui library for app inventor.
 
 version:
   number: auto        # Auto increments version number when built with '-r' ('--release') flag.
-  name: '1.0'
+  name: '1.0.1'
 
 authors:
   - Zain Ul Hassan
 
 build:
   # If enabled, you will be able to use Java 8 language features in your extension.
-  desugar:
-    enable: true
-    desugar_deps: true
+#  desugar:
+#    enable: true
+#    desugar_deps: true
 
   kotlin:
     enable: true

@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.view.TextureView
-import android.view.ViewGroup
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.util.Util
@@ -14,7 +13,6 @@ import com.google.appinventor.components.annotations.SimpleFunction
 import com.google.appinventor.components.annotations.SimpleProperty
 import com.google.appinventor.components.runtime.*
 import java.util.*
-import kotlin.collections.ArrayList
 
 @Suppress("FunctionName")
 class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(container.`$form`()), Component,
@@ -221,10 +219,10 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     @SimpleFunction(description = "Add a new media item")
     fun AddMedia(path: String, subtitle: String, mimeType: String, language: String) {
         try {
-            if (!path.isNullOrEmpty()) {
+            if (path.isNotEmpty()) {
                 val builder = MediaItem.Builder().setUri(path)
                 val subtitleItem: MediaItem.Subtitle?
-                if (!subtitle.isNullOrEmpty()) {
+                if (subtitle.isNotEmpty()) {
                     subtitleItem = MediaItem.Subtitle(Uri.parse(subtitle), mimeType, language, C.SELECTION_FLAG_DEFAULT)
                     builder.setSubtitles(arrayListOf(subtitleItem))
                 }
