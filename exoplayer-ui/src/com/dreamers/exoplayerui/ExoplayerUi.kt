@@ -5,9 +5,9 @@ import android.util.Log
 import android.view.ViewGroup
 import com.google.android.exoplayer2.DefaultControlDispatcher
 import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.ui.PlayerAttributes
 import com.google.android.exoplayer2.ui.PlayerControlView
 import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.ui.PlayerViewAttributes
 import com.google.android.exoplayer2.ui.StyledPlayerView
 import com.google.appinventor.components.annotations.DesignerProperty
 import com.google.appinventor.components.annotations.SimpleFunction
@@ -71,26 +71,26 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
 
         val viewGroup: ViewGroup = layout.view as ViewGroup
         if (isDebugMode) Log.v(LOG_TAG, "createLayout | Debug mode : true")
-
-        val attributes = PlayerViewAttributes(
-            isDebugMode = isDebugMode,
-            repeatToggleModes = getRepeatModeFromString(repeatMode),
-            showBuffering = getBufferingModeFromString(bufferingMode),
-            controllerTimeout = controllerTimeout,
-            resizeMode = getResizeModeFromString(resizeMode),
-            showFastForwardButton = showFastForwardButton,
-            showNextButton = showNextButton,
-            showPreviousButton = showPreviousButton,
-            showRewindButton = showRewindButton,
-            showShuffleButton = showShuffleButton,
-            hideOnTouch = hideOnTouch,
-            useArtwork = useArtwork,
-            animationEnabled = animationEnabled,
-            useController = useController,
-            rewindMs = rewindMs,
-            fastForwardMs = fastForwardMs,
-            autoShowController = autoShowController,
-            showSubtitleButton = showSubtitlesButton,
+        val attributes = PlayerAttributes(
+            /* useArtwork */useArtwork,
+            /* resizeMode */getResizeModeFromString(resizeMode),
+            /* controllerTimeout */controllerTimeout,
+            /* hideOnTouch */hideOnTouch,
+            /* autoShowController */autoShowController,
+            /* showBuffering */getBufferingModeFromString(bufferingMode),
+            /* useController */useController,
+            /* hideDuringAds */true,
+            /* isDebugMode */isDebugMode,
+            /* rewindMs */rewindMs,
+            /* fastForwardMs */fastForwardMs,
+            /* repeatToggleModes */getRepeatModeFromString(repeatMode),
+            /* showRewindButton */showRewindButton,
+            /* showFastForwardButton */showFastForwardButton,
+            /* showPreviousButton */showPreviousButton,
+            /* showNextButton */showNextButton,
+            /* showShuffleButton */showShuffleButton,
+            /* showSubtitleButton */showSubtitlesButton,
+            /* animationEnabled */animationEnabled
         )
 
         if (playerType == PlayerViewType.SimplePlayerView) {
