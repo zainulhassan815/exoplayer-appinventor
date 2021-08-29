@@ -3,11 +3,11 @@
 
 ---
 name: ExoplayerCore           # Caution: DO NOT change the name.
-description: Extension component for ExoplayerCore. Created using Rush.
+description: Google's Exoplayer For App Inventor and App Inventor Based Platforms.
 
 version:
   number: auto        # Auto increments version number when built with '-r' ('--release') flag.
-  name: '1.0'
+  name: '1.0.3'
 
 min_sdk: 16
 
