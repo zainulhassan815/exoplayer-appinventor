@@ -47,3 +47,4 @@ deps:
   - exoplayer-hls-2.14.1.jar
   - exoplayer-dash-2.14.1.jar
   - playerview-1.0.1.jar
+  - recyclerview-1.0.0.jar

@@ -18,7 +18,7 @@
 
 -dontwarn com.google.android.exoplayer2.**
 -dontwarn com.google.common.**
-
+-dontwarn androidx.recyclerview.widget.**
 -keepnames class com.google.android.exoplayer2**
 #-keepclassmembernames class com.google.android.exoplayer2** {
 #    public static *;
