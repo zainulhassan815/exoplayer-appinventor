@@ -4,6 +4,8 @@ A better free video player such as Google’s Exoplayer has always been missing 
 
 ***
 
-### Version 1.0.2
+### Version 1.0.3
 
-With the new release of Version 1.0.2, the extension has been seprated into two extensions namely core and ui. This is done to separate ui from core functionality. Now you can customize the ui and add shuffle and repeat toggle button and much more.
+- Styled Player View
+- Extra controls
+- Designer Properties
