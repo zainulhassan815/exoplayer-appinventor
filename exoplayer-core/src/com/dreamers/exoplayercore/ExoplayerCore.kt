@@ -163,7 +163,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
 
     // Get exoplayer instance
     @SimpleFunction(description = "Get Exoplayer instance to use in exoplayer ui")
-    fun GetPlayer() : Any? = exoplayer
+    fun Player() : Any? = exoplayer
 
 
     @SimpleFunction(description = "Create Exoplayer.")

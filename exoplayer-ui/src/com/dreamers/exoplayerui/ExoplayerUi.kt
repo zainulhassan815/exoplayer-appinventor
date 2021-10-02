@@ -1,25 +1,34 @@
 package com.dreamers.exoplayerui
 
 import android.content.Context
+import android.graphics.Color
+import android.graphics.Typeface
+import android.os.Build.VERSION
 import android.util.Log
+import android.util.TypedValue
+import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import com.google.android.exoplayer2.DefaultControlDispatcher
 import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.ui.PlayerAttributes
-import com.google.android.exoplayer2.ui.PlayerControlView
-import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.ui.StyledPlayerView
+import com.google.android.exoplayer2.text.Cue
+import com.google.android.exoplayer2.ui.*
 import com.google.appinventor.components.annotations.DesignerProperty
+import com.google.appinventor.components.annotations.SimpleEvent
 import com.google.appinventor.components.annotations.SimpleFunction
 import com.google.appinventor.components.annotations.SimpleProperty
 import com.google.appinventor.components.common.PropertyTypeConstants
-import com.google.appinventor.components.runtime.AndroidNonvisibleComponent
-import com.google.appinventor.components.runtime.ComponentContainer
-import com.google.appinventor.components.runtime.HVArrangement
-import com.google.appinventor.components.runtime.ReplForm
+import com.google.appinventor.components.runtime.*
 
 @Suppress("FunctionName")
-class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(container.`$form`()) {
+class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(container.`$form`()), Component,
+    OnPauseListener, OnResumeListener, StyledPlayerControlView.VisibilityListener, PlayerControlView.VisibilityListener, StyledPlayerControlView.OnFullScreenModeChangedListener {
+
+    init {
+        // Need to register extension for activity changes
+        form.registerForOnPause(this)
+        form.registerForOnResume(this)
+    }
 
     private val context: Context = container.`$context`()
     private var playerView: PlayerView? = null
@@ -36,6 +45,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     private var showRewindButton: Boolean = true
     private var showFastForwardButton: Boolean = true
     private var showSubtitlesButton: Boolean = true
+    private var showFullscreenButton: Boolean = true
     private var hideOnTouch: Boolean = true
     private var autoShowController: Boolean = true
     private var useArtwork: Boolean = true
@@ -44,6 +54,30 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     private var fastForwardMs: Int = DefaultControlDispatcher.DEFAULT_FAST_FORWARD_MS
     private var rewindMs: Int = DefaultControlDispatcher.DEFAULT_REWIND_MS
     private var playerType: PlayerViewType? = null
+
+    private var subtitleTextSizeFraction: Float = SubtitleView.DEFAULT_TEXT_SIZE_FRACTION
+    private var subtitleTextSizeAbsolute: Float = 14f
+    private var ignorePadding: Boolean = false
+    private var subtitleTextSizeType: Int = Cue.TEXT_SIZE_TYPE_FRACTIONAL
+    private var subtitleViewType: Int = SubtitleView.VIEW_TYPE_CANVAS
+    private var subtitleBottomPadding: Float = SubtitleView.DEFAULT_BOTTOM_PADDING_FRACTION
+
+    private var subtitleForegroundColor: Int = Color.WHITE
+    private var subtitleBackgroundColor: Int = Color.BLACK
+    private var subtitleWindowColor: Int = Color.TRANSPARENT
+    private var subtitleEdgeColor: Int = Color.WHITE
+    private var subtitleEdgeType: Int = CaptionStyleCompat.EDGE_TYPE_NONE
+    private var subtitleTypeface: Typeface? = null
+
+    private var trackColor: Int = DefaultTimeBar.DEFAULT_UNPLAYED_COLOR
+    private var thumbColor: Int = DefaultTimeBar.DEFAULT_SCRUBBER_COLOR
+    private var progressColor: Int = DefaultTimeBar.DEFAULT_PLAYED_COLOR
+    private var bufferedColor: Int = DefaultTimeBar.DEFAULT_BUFFERED_COLOR
+
+    private var trackHeight: Int = DefaultTimeBar.DEFAULT_BAR_HEIGHT_DP
+    private var thumbSize: Int = DefaultTimeBar.DEFAULT_SCRUBBER_ENABLED_SIZE_DP
+    private var thumbSizeDisabled: Int = DefaultTimeBar.DEFAULT_SCRUBBER_DISABLED_SIZE_DP
+    private var thumbSizeActive: Int = DefaultTimeBar.DEFAULT_SCRUBBER_DRAGGED_SIZE_DP
 
     enum class PlayerViewType {
         SimplePlayerView,
@@ -64,44 +98,138 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
         const val REPEAT_MODE_ONE = "One"
         const val REPEAT_MODE_All = "All"
         const val REPEAT_MODE_ONE_ALL = "One & All"
+        const val VIEW_TYPE_CANVAS = "Canvas"
+        const val VIEW_TYPE_WEB = "Web"
+        const val EDGE_TYPE_NONE = "No Edge"
+        const val EDGE_TYPE_OUTLINE = "Outline"
+        const val EDGE_TYPE_DROP_SHADOW = "Drop Shadow"
+        const val EDGE_TYPE_RAISED = "Raised"
+        const val EDGE_TYPE_DEPRESSED = "Depressed"
+        const val TEXT_SIE_TYPE_FRACTION = "Fractional Size"
+        const val TEXT_SIE_TYPE_ABSOLUTE = "Absolute Size"
     }
+
+    // On Pause
+    override fun onPause() {
+        Log.v(LOG_TAG, "onPause")
+        if (VERSION.SDK_INT < 24) {
+            if (playerType == PlayerViewType.SimplePlayerView)
+                playerView?.onPause()
+            else if (playerType == PlayerViewType.StyledPlayerView)
+                styledPlayerView?.onPause()
+        }
+    }
+
+    // On Resume
+    override fun onResume() {
+        Log.v(LOG_TAG, "onResume")
+        if (VERSION.SDK_INT < 24) {
+            if (playerType == PlayerViewType.SimplePlayerView)
+                playerView?.onResume()
+            else if (playerType == PlayerViewType.StyledPlayerView)
+                styledPlayerView?.onResume()
+        }
+    }
+
+    // Visibility Change Listener
+    override fun onVisibilityChange(visibility: Int) {
+        val visible = visibility == View.VISIBLE
+        OnVisibilityChanged(visible)
+    }
+
+    // Fullscreen Change Listener
+    override fun onFullScreenModeChanged(isFullScreen: Boolean) {
+        OnFullscreenChanged(isFullScreen)
+    }
+
+    private val subtitleView: SubtitleView?
+        get() {
+            return when (playerType) {
+                PlayerViewType.SimplePlayerView -> playerView?.subtitleView
+                PlayerViewType.StyledPlayerView -> styledPlayerView?.subtitleView
+                else -> null
+            }
+        }
 
     // Initialize player view
     private fun initialize(layout: HVArrangement, exoplayer: SimpleExoPlayer, playerType: PlayerViewType) {
 
+        this.playerType = playerType
         val viewGroup: ViewGroup = layout.view as ViewGroup
         if (isDebugMode) Log.v(LOG_TAG, "createLayout | Debug mode : true")
-        val attributes = PlayerAttributes(
+        val playerAttributes = PlayerAttributes(
             /* useArtwork */useArtwork,
-            /* resizeMode */getResizeModeFromString(resizeMode),
+            /* resizeMode */getResizeMode(resizeMode),
             /* controllerTimeout */controllerTimeout,
             /* hideOnTouch */hideOnTouch,
             /* autoShowController */autoShowController,
-            /* showBuffering */getBufferingModeFromString(bufferingMode),
+            /* showBuffering */getBufferingMode(bufferingMode),
             /* useController */useController,
             /* hideDuringAds */true,
             /* isDebugMode */isDebugMode,
             /* rewindMs */rewindMs,
             /* fastForwardMs */fastForwardMs,
-            /* repeatToggleModes */getRepeatModeFromString(repeatMode),
+            /* repeatToggleModes */getRepeatMode(repeatMode),
             /* showRewindButton */showRewindButton,
             /* showFastForwardButton */showFastForwardButton,
             /* showPreviousButton */showPreviousButton,
             /* showNextButton */showNextButton,
             /* showShuffleButton */showShuffleButton,
             /* showSubtitleButton */showSubtitlesButton,
+            /* showFullscreenButton */showFullscreenButton,
             /* animationEnabled */animationEnabled
         )
 
+        val timeBarAttributes = TimeBarAttributes(
+            null,
+            trackHeight,
+            DefaultTimeBar.DEFAULT_TOUCH_TARGET_HEIGHT_DP,
+            Gravity.BOTTOM,
+            DefaultTimeBar.DEFAULT_AD_MARKER_WIDTH_DP,
+            thumbSize,
+            thumbSizeDisabled,
+            thumbSizeActive,
+            progressColor,
+            thumbColor,
+            bufferedColor,
+            trackColor,
+            DefaultTimeBar.DEFAULT_AD_MARKER_COLOR,
+            DefaultTimeBar.DEFAULT_PLAYED_AD_MARKER_COLOR
+        )
+
         if (playerType == PlayerViewType.SimplePlayerView) {
-            playerView = PlayerView(context, attributes).also { view ->
+            playerView = PlayerView(context, timeBarAttributes, playerAttributes).also { view ->
                 view.player = exoplayer
+                view.setKeepContentOnPlayerReset(true)
+                view.setControllerVisibilityListener(this)
             }
         } else {
-            styledPlayerView = StyledPlayerView(context, attributes).also { view ->
+            styledPlayerView = StyledPlayerView(context, timeBarAttributes, playerAttributes).also { view ->
                 view.player = exoplayer
+                view.setKeepContentOnPlayerReset(true)
+                view.setControllerVisibilityListener(this)
+                view.setControllerOnFullScreenModeChangedListener(this)
             }
         }
+
+        // Set subtitle styles
+        subtitleView?.apply {
+            SubtitleTextSizeFraction(subtitleTextSizeFraction)
+            SubtitleTextSizeAbsolute(subtitleTextSizeAbsolute)
+            setViewType(subtitleViewType)
+            setBottomPaddingFraction(subtitleBottomPadding)
+            setStyle(
+                CaptionStyleCompat(
+                    subtitleForegroundColor,
+                    subtitleBackgroundColor,
+                    subtitleWindowColor,
+                    subtitleEdgeType,
+                    subtitleEdgeColor,
+                    subtitleTypeface
+                )
+            )
+        }
+
         viewGroup.addView(
             if (playerType == PlayerViewType.SimplePlayerView) playerView else styledPlayerView,
             ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
@@ -142,6 +270,18 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
             styledPlayerView?.hideController()
     }
 
+    // On Visibility Changed
+    @SimpleEvent(description = "Event raised when controls visibility changes.")
+    fun OnVisibilityChanged(visible: Boolean) {
+        EventDispatcher.dispatchEvent(this,"OnVisibilityChanged",visible)
+    }
+
+    // On Fullscreen Change
+    @SimpleEvent(description = "Event raised when fullscreen button is clicked.")
+    fun OnFullscreenChanged(isFullScreen: Boolean) {
+        EventDispatcher.dispatchEvent(this,"OnFullscreenChanged",isFullScreen)
+    }
+
     // Set Repeat Mode
     @DesignerProperty(
         editorType = PropertyTypeConstants.PROPERTY_TYPE_CHOICES,
@@ -151,9 +291,9 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     @SimpleProperty(description = "Show or hide repeat mode button from ui by specifying repeat modes")
     fun RepeatMode(mode: String) {
         if (playerType == PlayerViewType.SimplePlayerView)
-            playerView?.setRepeatToggleModes(getRepeatModeFromString(mode))
+            playerView?.setRepeatToggleModes(getRepeatMode(mode))
         else if (playerType == PlayerViewType.StyledPlayerView)
-            styledPlayerView?.setRepeatToggleModes(getRepeatModeFromString(mode))
+            styledPlayerView?.setRepeatToggleModes(getRepeatMode(mode))
 
         repeatMode = mode
     }
@@ -265,9 +405,9 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     @SimpleProperty(description = "Set when to show loading progress indicator")
     fun ShowLoading(show: String) {
         if (playerType == PlayerViewType.SimplePlayerView)
-            playerView?.setShowBuffering(getBufferingModeFromString(show))
+            playerView?.setShowBuffering(getBufferingMode(show))
         else if (playerType == PlayerViewType.StyledPlayerView)
-            styledPlayerView?.setShowBuffering(getBufferingModeFromString(show))
+            styledPlayerView?.setShowBuffering(getBufferingMode(show))
 
         bufferingMode = show
     }
@@ -335,9 +475,9 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     @SimpleProperty(description = "Set video resize mode")
     fun ResizeMode(mode: String) {
         if (playerType == PlayerViewType.SimplePlayerView)
-            playerView?.resizeMode = getResizeModeFromString(mode)
+            playerView?.resizeMode = getResizeMode(mode)
         else if (playerType == PlayerViewType.StyledPlayerView)
-            styledPlayerView?.resizeMode = getResizeModeFromString(mode)
+            styledPlayerView?.resizeMode = getResizeMode(mode)
 
         resizeMode = mode
     }
@@ -439,4 +579,240 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
             PlayerViewType.StyledPlayerView -> styledPlayerView?.isControllerFullyVisible ?: false
             else -> false
         }
+
+    // Subtitle Text Size Type
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_CHOICES,
+        editorArgs = [TEXT_SIE_TYPE_FRACTION, TEXT_SIE_TYPE_ABSOLUTE],
+        defaultValue = TEXT_SIE_TYPE_FRACTION
+    )
+    @SimpleProperty(description = "Set subtitles text size type.")
+    fun SubtitleTextSizeType(type: String) {
+        subtitleTextSizeType = getSizeType(type)
+    }
+
+    @SimpleProperty
+    fun TextSizeTypeFractional() = TEXT_SIE_TYPE_FRACTION
+
+    @SimpleProperty
+    fun TextSizeTypeAbsolute() = TEXT_SIE_TYPE_ABSOLUTE
+
+    // Subtitle Text Size Fraction
+    @DesignerProperty(
+        defaultValue = "${SubtitleView.DEFAULT_TEXT_SIZE_FRACTION}",
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_FLOAT
+    )
+    @SimpleProperty(description = "Set fractional text size for subtitles")
+    fun SubtitleTextSizeFraction(size: Float) {
+        subtitleTextSizeFraction = size
+        if (subtitleTextSizeType == Cue.TEXT_SIZE_TYPE_FRACTIONAL)
+            subtitleView?.setFractionalTextSize(size, ignorePadding)
+    }
+
+    // Subtitle Text Size Absolute
+    @DesignerProperty(
+        defaultValue = "14",
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_FLOAT
+    )
+    @SimpleProperty(description = "Set absolute text size for subtitles")
+    fun SubtitleTextSizeAbsolute(size: Float) {
+        subtitleTextSizeAbsolute = size
+        if (subtitleTextSizeType == Cue.TEXT_SIZE_TYPE_ABSOLUTE)
+            subtitleView?.setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, subtitleTextSizeAbsolute)
+    }
+
+    // Subtitle View Type
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_CHOICES,
+        editorArgs = [VIEW_TYPE_CANVAS, VIEW_TYPE_WEB],
+        defaultValue = VIEW_TYPE_CANVAS
+    )
+    @SimpleProperty(description = "Set subtitle output view type")
+    fun SubtitleRenderViewType(type: String) {
+        subtitleViewType = getSubtitleViewType(type)
+        subtitleView?.setViewType(subtitleViewType)
+    }
+
+    @SimpleProperty
+    fun SubtitleViewTypeCanvas() = VIEW_TYPE_CANVAS
+
+    @SimpleProperty
+    fun SubtitleViewTypeWeb() = VIEW_TYPE_WEB
+
+    // Subtitle Bottom Padding
+    @DesignerProperty(
+        defaultValue = "14",
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_FLOAT
+    )
+    @SimpleProperty(description = "Set subtitle bottom padding")
+    fun SubtitleBottomPadding(padding: Float) {
+        subtitleBottomPadding = padding
+        subtitleView?.setBottomPaddingFraction(padding)
+    }
+
+    // Subtitle Ignore Padding
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN,
+        defaultValue = "False"
+    )
+    @SimpleProperty(description = "Set to true if SubtitleTextSizeFraction should be interpreted as a fraction of this view's height ignoring any top and bottom padding. Set to false if SubtitleTextSizeFraction should be interpreted as a fraction of this view's remaining height after the top and bottom padding has been subtracted.")
+    fun IgnorePadding(ignore: Boolean) {
+        ignorePadding = ignore
+    }
+
+    // Foreground Color
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_COLOR,
+        defaultValue = "&HFFFFFFFF"
+    )
+    @SimpleProperty(description = "Set foreground color for subtitles. Set before creating player.")
+    fun SubtitleForegroundColor(color: Int) {
+        subtitleForegroundColor = color
+    }
+
+    // Background Color
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_COLOR,
+        defaultValue = "&HFF000000"
+    )
+    @SimpleProperty(description = "Set background color for subtitles. Set before creating player.")
+    fun SubtitleBackgroundColor(color: Int) {
+        subtitleBackgroundColor = color
+    }
+
+    // Window Color
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_COLOR,
+        defaultValue = "&H00FFFFFF"
+    )
+    @SimpleProperty(description = "Set subtitles window color. Set before creating player.")
+    fun SubtitleWindowColor(color: Int) {
+        subtitleWindowColor = color
+    }
+
+    // Edge Color
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_COLOR,
+        defaultValue = "&HFFFFFFFF"
+    )
+    @SimpleProperty(description = "Set edge color for subtitles. Set before creating player.")
+    fun SubtitleEdgeColor(color: Int) {
+        subtitleEdgeColor = color
+    }
+
+    // Edge Type
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_CHOICES,
+        editorArgs = [EDGE_TYPE_NONE, EDGE_TYPE_DEPRESSED, EDGE_TYPE_DROP_SHADOW, EDGE_TYPE_OUTLINE, EDGE_TYPE_RAISED],
+        defaultValue = EDGE_TYPE_NONE
+    )
+    @SimpleProperty(description = "Set subtitles edge type. Set before creating player.")
+    fun SubtitleEdgeType(type: String) {
+        subtitleEdgeType = getEdgeType(type)
+    }
+
+    @SimpleProperty
+    fun EdgeTypeNone() = EDGE_TYPE_NONE
+
+    @SimpleProperty
+    fun EdgeTypeOutline() = EDGE_TYPE_OUTLINE
+
+    @SimpleProperty
+    fun EdgeTypeDropShadow() = EDGE_TYPE_DROP_SHADOW
+
+    @SimpleProperty
+    fun EdgeTypeRaised() = EDGE_TYPE_RAISED
+
+    @SimpleProperty
+    fun EdgeTypeDepressed() = EDGE_TYPE_DEPRESSED
+
+    // Subtitle Typeface
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_ASSET,
+        defaultValue = ""
+    )
+    @SimpleProperty(description = "Set custom font typeface for subtitles. Set before creating player.")
+    fun SubtitleTypeface(asset: String) {
+        subtitleTypeface = getTypeface(context, asset)
+    }
+
+    // TrackColor
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_COLOR,
+        defaultValue = "&H33FFFFFF"
+    )
+    @SimpleProperty(description = "Track Color")
+    fun TrackColor(color: Int) {
+        trackColor = color
+    }
+
+    // ThumbColor
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_COLOR,
+        defaultValue = "&HFFFFFFFF"
+    )
+    @SimpleProperty(description = "Thumb Color")
+    fun ThumbColor(color: Int) {
+        thumbColor = color
+    }
+
+    // ProgressColor
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_COLOR,
+        defaultValue = "&HFFFFFFFF"
+    )
+    @SimpleProperty(description = "Progress Color")
+    fun ProgressColor(color: Int) {
+        progressColor = color
+    }
+
+    // BufferedColor
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_COLOR,
+        defaultValue = "&HCCFFFFFF"
+    )
+    @SimpleProperty(description = "Buffered Color")
+    fun BufferedColor(color: Int) {
+        bufferedColor = color
+    }
+
+    // TrackHeight
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_INTEGER,
+        defaultValue = "${DefaultTimeBar.DEFAULT_BAR_HEIGHT_DP}"
+    )
+    @SimpleProperty(description = "Track Height. Set this value before creating slider.")
+    fun TrackHeight(height: Int) {
+        trackHeight = height
+    }
+
+    // ThumbSize
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_INTEGER,
+        defaultValue = "${DefaultTimeBar.DEFAULT_SCRUBBER_ENABLED_SIZE_DP}"
+    )
+    @SimpleProperty(description = "Thumb Size. Set this value before creating slider.")
+    fun ThumbSize(size: Int) {
+        thumbSize = size
+    }
+
+    // DisabledThumbSize
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_INTEGER,
+        defaultValue = "${DefaultTimeBar.DEFAULT_SCRUBBER_DISABLED_SIZE_DP}"
+    )
+    @SimpleProperty(description = "Disabled Thumb Size. Set this value before creating slider.")
+    fun DisabledThumbSize(size: Int) {
+        thumbSizeDisabled = size
+    }
+
+    // ActiveThumbSize
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_INTEGER,
+        defaultValue = "${DefaultTimeBar.DEFAULT_SCRUBBER_DRAGGED_SIZE_DP}"
+    )
+    @SimpleProperty(description = "Active Thumb Size. Set this value before creating slider.")
+    fun ActiveThumbSize(size: Int) {
+        thumbSizeActive = size
+    }
 }
