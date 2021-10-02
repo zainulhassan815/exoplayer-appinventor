@@ -22,7 +22,7 @@ import com.google.appinventor.components.runtime.*
 
 @Suppress("FunctionName")
 class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(container.`$form`()), Component,
-    OnPauseListener, OnResumeListener, StyledPlayerControlView.VisibilityListener, PlayerControlView.VisibilityListener, StyledPlayerControlView.OnFullScreenModeChangedListener {
+    OnPauseListener, OnResumeListener {
 
     init {
         // Need to register extension for activity changes
@@ -131,17 +131,6 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
         }
     }
 
-    // Visibility Change Listener
-    override fun onVisibilityChange(visibility: Int) {
-        val visible = visibility == View.VISIBLE
-        OnVisibilityChanged(visible)
-    }
-
-    // Fullscreen Change Listener
-    override fun onFullScreenModeChanged(isFullScreen: Boolean) {
-        OnFullscreenChanged(isFullScreen)
-    }
-
     private val subtitleView: SubtitleView?
         get() {
             return when (playerType) {
@@ -201,14 +190,20 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
             playerView = PlayerView(context, timeBarAttributes, playerAttributes).also { view ->
                 view.player = exoplayer
                 view.setKeepContentOnPlayerReset(true)
-                view.setControllerVisibilityListener(this)
+                view.setControllerVisibilityListener {
+                    OnVisibilityChanged(it == View.VISIBLE)
+                }
             }
         } else {
             styledPlayerView = StyledPlayerView(context, timeBarAttributes, playerAttributes).also { view ->
                 view.player = exoplayer
                 view.setKeepContentOnPlayerReset(true)
-                view.setControllerVisibilityListener(this)
-                view.setControllerOnFullScreenModeChangedListener(this)
+                view.setControllerVisibilityListener {
+                    OnVisibilityChanged(it == View.VISIBLE)
+                }
+                view.setControllerOnFullScreenModeChangedListener {
+                    OnFullscreenChanged(it)
+                }
             }
         }
 
@@ -273,13 +268,13 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     // On Visibility Changed
     @SimpleEvent(description = "Event raised when controls visibility changes.")
     fun OnVisibilityChanged(visible: Boolean) {
-        EventDispatcher.dispatchEvent(this,"OnVisibilityChanged",visible)
+        EventDispatcher.dispatchEvent(this, "OnVisibilityChanged", visible)
     }
 
     // On Fullscreen Change
     @SimpleEvent(description = "Event raised when fullscreen button is clicked.")
     fun OnFullscreenChanged(isFullScreen: Boolean) {
-        EventDispatcher.dispatchEvent(this,"OnFullscreenChanged",isFullScreen)
+        EventDispatcher.dispatchEvent(this, "OnFullscreenChanged", isFullScreen)
     }
 
     // Set Repeat Mode
@@ -394,6 +389,16 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     fun SubtitleButtonVisible(show: Boolean) {
         styledPlayerView?.setShowSubtitleButton(show)
         showSubtitlesButton = show
+    }
+
+    // Show fullscreen button
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN,
+        defaultValue = "True"
+    )
+    @SimpleProperty(description = "Show/Hide fullscreen button. Must be configured before creating player.")
+    fun FullscreenButtonVisible(show: Boolean) {
+        showFullscreenButton = show
     }
 
     // Show Loading
