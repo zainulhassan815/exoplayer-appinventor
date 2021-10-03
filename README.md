@@ -4,7 +4,7 @@ A better free video player such as Google’s Exoplayer has always been missing 
 
 ***
 
-### Version 1.0.3
+### Version 1.0.4
 
 - Styled Player View
 - Extra controls

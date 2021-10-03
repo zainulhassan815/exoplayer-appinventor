@@ -21,6 +21,7 @@
 
 # Don't warn about core library
 -dontwarn com.google.android.exoplayer2.**
+-dontwarn java.lang.invoke.LambdaMetafactory
 
 #-keep class com.google.android.exoplayer2** {*;}
 

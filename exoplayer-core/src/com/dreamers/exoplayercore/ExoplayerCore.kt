@@ -12,6 +12,10 @@ import com.google.appinventor.components.annotations.SimpleEvent
 import com.google.appinventor.components.annotations.SimpleFunction
 import com.google.appinventor.components.annotations.SimpleProperty
 import com.google.appinventor.components.runtime.*
+import com.google.appinventor.components.runtime.util.YailList
+import com.google.gson.JsonObject
+import org.json.JSONException
+import org.json.JSONObject
 import java.util.*
 
 @Suppress("FunctionName")
@@ -87,6 +91,56 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         Log.v(LOG_TAG, "releasePlayer : Released = ${exoplayer == null}")
     }
 
+    private fun MediaMetadata.toJson(): JsonObject {
+        return JsonObject().also { obj ->
+            obj.addProperty("title", this.title.toString())
+            obj.addProperty("artist", this.artist.toString())
+            obj.addProperty("albumTitle", this.albumTitle.toString())
+            obj.addProperty("albumArtist", this.albumArtist.toString())
+            obj.addProperty("displayTitle", this.displayTitle.toString())
+            obj.addProperty("subtitle", this.subtitle.toString())
+            obj.addProperty("description", this.description.toString())
+            obj.addProperty("media_uri", this.mediaUri.toString())
+            obj.addProperty("artwork_uri", this.artworkUri.toString())
+            obj.addProperty("track_number", this.trackNumber)
+            obj.addProperty("total_tracks", this.totalTrackCount)
+            obj.addProperty("year", this.year)
+            obj.addProperty("playable", this.isPlayable)
+        }
+    }
+
+    private fun JSONObject.getStringOrNull(key: String): String? {
+        return try {
+            getString(key)
+        } catch (e: java.lang.Exception) {
+            null
+        }
+    }
+
+    private fun JSONObject.getIntOrNull(key: String): Int? {
+        return try {
+            getInt(key)
+        } catch (e: java.lang.Exception) {
+            null
+        }
+    }
+
+    private fun parseSubtitleData(data: String): MediaItem.Subtitle? {
+        try {
+            val jsonObject = JSONObject(data)
+            val uri: String = jsonObject.getString("path")
+            val mimeType: String = jsonObject.getString("mime_type")
+            val label = jsonObject.getStringOrNull("label")
+            val language = jsonObject.getStringOrNull("language")
+            val selectionFlags = jsonObject.getIntOrNull("selection_flags") ?: 0
+            return MediaItem.Subtitle(Uri.parse(uri), mimeType, language, selectionFlags, 0, label)
+        } catch (e: JSONException) {
+            Log.e(LOG_TAG, "parseSubtitleData | Failed to parse data : $data with error : $e")
+            OnError("Failed to parse data : $data with error : $e")
+        }
+        return null
+    }
+
     // Do basic setup for player
     private fun setupPlayer() {
         Log.v(LOG_TAG, "Setting up player")
@@ -150,7 +204,39 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
                         OnRenderFirstFrame()
                     }
 
+                    override fun onIsPlayingChanged(isPlaying: Boolean) {
+                        super.onIsPlayingChanged(isPlaying)
+                        Log.v(LOG_TAG, "onIsPlayingChanged : IsPlaying = $isPlaying")
+                        OnIsPlayingChanged(isPlaying)
+                    }
 
+                    override fun onRepeatModeChanged(repeatMode: Int) {
+                        super.onRepeatModeChanged(repeatMode)
+                        Log.v(LOG_TAG, "onRepeatModeChanged : RepeatMode = $repeatMode")
+                        OnRepeatModeChanged(repeatMode)
+                    }
+
+                    override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+                        super.onShuffleModeEnabledChanged(shuffleModeEnabled)
+                        Log.v(LOG_TAG, "onShuffleModeEnabledChanged : ShuffleModeEnabled = $shuffleModeEnabled")
+                        OnShuffleModeEnabledChanged(shuffleModeEnabled)
+                    }
+
+                    override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+                        super.onMediaMetadataChanged(mediaMetadata)
+                        val meta = mediaMetadata.toJson()
+                        Log.v(LOG_TAG, "onMediaMetadataChanged : MetaData = $meta")
+                        OnMetadataChanged(meta)
+                    }
+
+                    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                        super.onMediaItemTransition(mediaItem, reason)
+                        Log.v(
+                            LOG_TAG,
+                            "onMediaItemTransition : MediaUrl = ${mediaItem?.mediaId.toString()} | Reason = $reason"
+                        )
+                        OnMediaItemTransition(mediaItem?.mediaId.toString(), reason)
+                    }
                 }
 
                 // Add Listeners to player
@@ -163,7 +249,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
 
     // Get exoplayer instance
     @SimpleFunction(description = "Get Exoplayer instance to use in exoplayer ui")
-    fun GetPlayer() : Any? = exoplayer
+    fun Player(): Any? = exoplayer
 
 
     @SimpleFunction(description = "Create Exoplayer.")
@@ -217,15 +303,18 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
 
     // Add Media Item
     @SimpleFunction(description = "Add a new media item")
-    fun AddMedia(path: String, subtitle: String, mimeType: String, language: String) {
+    fun AddMedia(path: String, subtitles: YailList) {
         try {
             if (path.isNotEmpty()) {
                 val builder = MediaItem.Builder().setUri(path)
-                val subtitleItem: MediaItem.Subtitle?
-                if (subtitle.isNotEmpty()) {
-                    subtitleItem = MediaItem.Subtitle(Uri.parse(subtitle), mimeType, language, C.SELECTION_FLAG_DEFAULT)
-                    builder.setSubtitles(arrayListOf(subtitleItem))
+                val subtitleArray: ArrayList<MediaItem.Subtitle> = arrayListOf()
+
+                subtitles.toStringArray().forEach { subtitleData ->
+                    val subtitle = parseSubtitleData(subtitleData)
+                    subtitle?.let { subtitleArray.add(subtitle) }
                 }
+                builder.setSubtitles(subtitleArray)
+                builder.setMediaId(path)
                 val mediaItem = builder.build()
                 mediaItems.add(mediaItem)
                 exoplayer?.addMediaItem(mediaItem)
@@ -309,35 +398,78 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         EventDispatcher.dispatchEvent(this, "OnRenderFirstFrame")
     }
 
+    @SimpleEvent(description = "Event raised when video playing changes.")
+    fun OnIsPlayingChanged(isPlaying: Boolean) {
+        EventDispatcher.dispatchEvent(this, "OnIsPlayingChanged", isPlaying)
+    }
+
+    @SimpleEvent(description = "Event raised when playlist shuffle mode changes.")
+    fun OnShuffleModeEnabledChanged(enabled: Boolean) {
+        EventDispatcher.dispatchEvent(this, "OnShuffleModeEnabledChanged", enabled)
+    }
+
+    @SimpleEvent(description = "Event raised when repeat mode changes.")
+    fun OnRepeatModeChanged(repeatMode: Int) {
+        EventDispatcher.dispatchEvent(this, "OnRepeatModeChanged", repeatMode)
+    }
+
+    @SimpleEvent(description = "Event raised when media metadata changes. Provides a json data object.")
+    fun OnMetadataChanged(data: Any) {
+        EventDispatcher.dispatchEvent(this, "OnMetadataChanged", data)
+    }
+
+    @SimpleEvent(description = "Event raised when current media item transitions.")
+    fun OnMediaItemTransition(mediaUrl: String, reason: Int) {
+        EventDispatcher.dispatchEvent(this, "OnMediaItemTransition", mediaUrl, reason)
+    }
+
     // Property Getters
     // =============================
 
-    // State Idle
+    // Playback States
     @SimpleProperty(description = "Playback State : IDLE")
     fun StateIdle() = Player.STATE_IDLE
 
-    // State Idle
     @SimpleProperty(description = "Playback State : READY")
     fun StateReady() = Player.STATE_READY
 
-    // State Idle
     @SimpleProperty(description = "Playback State : ENDED")
     fun StateEnded() = Player.STATE_ENDED
 
-    // State Idle
     @SimpleProperty(description = "Playback State : BUFFERING")
     fun StateBuffering() = Player.STATE_BUFFERING
 
-    // Repeat Mode None
+    // Repeat Modes
     @SimpleProperty(description = "Repeat Mode : None")
     fun RepeatModeOff() = Player.REPEAT_MODE_OFF
 
-    // Repeat Mode None
     @SimpleProperty(description = "Repeat Mode : One")
     fun RepeatModeOne() = Player.REPEAT_MODE_ONE
 
-    // Repeat Mode None
     @SimpleProperty(description = "Repeat Mode : All")
     fun RepeatModeAll() = Player.REPEAT_MODE_ALL
+
+    // Transition Reason
+
+    @SimpleProperty
+    fun TransitionReasonAuto() = Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
+
+    @SimpleProperty
+    fun TransitionReasonRepeat() = Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT
+
+    @SimpleProperty
+    fun TransitionReasonSeek() = Player.MEDIA_ITEM_TRANSITION_REASON_SEEK
+
+    @SimpleProperty
+    fun TransitionReasonPlaylistChanged() = Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED
+
+    @SimpleProperty
+    fun SelectionFlagDefault() = C.SELECTION_FLAG_DEFAULT
+
+    @SimpleProperty
+    fun SelectionFlagForced() = C.SELECTION_FLAG_FORCED
+
+    @SimpleProperty
+    fun SelectionFlagAutoSelect() = C.SELECTION_FLAG_AUTOSELECT
 
 }

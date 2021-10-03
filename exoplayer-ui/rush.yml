@@ -7,7 +7,7 @@ description: A rewrite of exoplayer's ui library for app inventor.
 
 version:
   number: auto        # Auto increments version number when built with '-r' ('--release') flag.
-  name: '1.0.1'
+  name: '1.0.4'
 
 authors:
   - Zain Ul Hassan

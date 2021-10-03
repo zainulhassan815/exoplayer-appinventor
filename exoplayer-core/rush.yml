@@ -7,7 +7,7 @@ description: Google's Exoplayer For App Inventor and App Inventor Based Platform
 
 version:
   number: auto        # Auto increments version number when built with '-r' ('--release') flag.
-  name: '1.0.3'
+  name: '1.0.4'
 
 min_sdk: 16
 
@@ -46,4 +46,5 @@ deps:
   - failureaccess-1.0.1.jar
   - exoplayer-hls-2.14.1.jar
   - exoplayer-dash-2.14.1.jar
-  - playerview-1.0.1.jar
+  - playerview-1.0.4.jar
+  - recyclerview-1.0.0.jar
