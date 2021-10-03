@@ -109,22 +109,31 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         }
     }
 
+    private fun JSONObject.getStringOrNull(key: String): String? {
+        return try {
+            getString(key)
+        } catch (e: java.lang.Exception) {
+            null
+        }
+    }
+
+    private fun JSONObject.getIntOrNull(key: String): Int? {
+        return try {
+            getInt(key)
+        } catch (e: java.lang.Exception) {
+            null
+        }
+    }
+
     private fun parseSubtitleData(data: String): MediaItem.Subtitle? {
         try {
             val jsonObject = JSONObject(data)
             val uri: String = jsonObject.getString("path")
             val mimeType: String = jsonObject.getString("mime_type")
-            var label: String? = null
-            var language: String? = null
-            try {
-                label = jsonObject.getString("label")
-                language = jsonObject.getString("language")
-            } catch (e: JSONException) {
-                Log.v(LOG_TAG, "parseSubtitleData | Could not find optional data : ${e.message}")
-            }
-            val selectionFlags: Int = jsonObject.getInt("selection_flags")
-            val roleFlags: Int = jsonObject.getInt("role_flags")
-            return MediaItem.Subtitle(Uri.parse(uri), mimeType, language, selectionFlags, roleFlags, label)
+            val label = jsonObject.getStringOrNull("label")
+            val language = jsonObject.getStringOrNull("language")
+            val selectionFlags = jsonObject.getIntOrNull("selection_flags") ?: 0
+            return MediaItem.Subtitle(Uri.parse(uri), mimeType, language, selectionFlags, 0, label)
         } catch (e: JSONException) {
             Log.e(LOG_TAG, "parseSubtitleData | Failed to parse data : $data with error : $e")
             OnError("Failed to parse data : $data with error : $e")
@@ -197,26 +206,35 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
 
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         super.onIsPlayingChanged(isPlaying)
+                        Log.v(LOG_TAG, "onIsPlayingChanged : IsPlaying = $isPlaying")
                         OnIsPlayingChanged(isPlaying)
                     }
 
                     override fun onRepeatModeChanged(repeatMode: Int) {
                         super.onRepeatModeChanged(repeatMode)
+                        Log.v(LOG_TAG, "onRepeatModeChanged : RepeatMode = $repeatMode")
                         OnRepeatModeChanged(repeatMode)
                     }
 
                     override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
                         super.onShuffleModeEnabledChanged(shuffleModeEnabled)
+                        Log.v(LOG_TAG, "onShuffleModeEnabledChanged : ShuffleModeEnabled = $shuffleModeEnabled")
                         OnShuffleModeEnabledChanged(shuffleModeEnabled)
                     }
 
                     override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
                         super.onMediaMetadataChanged(mediaMetadata)
-                        OnMetadataChanged(mediaMetadata.toJson())
+                        val meta = mediaMetadata.toJson()
+                        Log.v(LOG_TAG, "onMediaMetadataChanged : MetaData = $meta")
+                        OnMetadataChanged(meta)
                     }
 
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                         super.onMediaItemTransition(mediaItem, reason)
+                        Log.v(
+                            LOG_TAG,
+                            "onMediaItemTransition : MediaUrl = ${mediaItem?.mediaId.toString()} | Reason = $reason"
+                        )
                         OnMediaItemTransition(mediaItem?.mediaId.toString(), reason)
                     }
                 }
@@ -444,4 +462,14 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
 
     @SimpleProperty
     fun TransitionReasonPlaylistChanged() = Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED
+
+    @SimpleProperty
+    fun SelectionFlagDefault() = C.SELECTION_FLAG_DEFAULT
+
+    @SimpleProperty
+    fun SelectionFlagForced() = C.SELECTION_FLAG_FORCED
+
+    @SimpleProperty
+    fun SelectionFlagAutoSelect() = C.SELECTION_FLAG_AUTOSELECT
+
 }

@@ -1,5 +1,6 @@
 package com.dreamers.exoplayerui
 
+import android.app.Activity
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
@@ -201,9 +202,10 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
                 view.setControllerVisibilityListener {
                     OnVisibilityChanged(it == View.VISIBLE)
                 }
-                view.setControllerOnFullScreenModeChangedListener {
-                    OnFullscreenChanged(it)
-                }
+                if (showFullscreenButton)
+                    view.setControllerOnFullScreenModeChangedListener {
+                        OnFullscreenChanged(it)
+                    }
             }
         }
 
@@ -263,6 +265,24 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
             playerView?.hideController()
         else if (playerType == PlayerViewType.StyledPlayerView)
             styledPlayerView?.hideController()
+    }
+
+    @SimpleFunction(description = "Hide System UI. Use with caution. Still in testing.")
+    fun HideSystemUI() {
+        val window = (context as Activity).window
+        window.decorView.fitsSystemWindows = true
+        window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        // Hide the nav bar and status bar
+                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_FULLSCREEN)
+
+    }
+
+    @SimpleFunction(description = "Show System UI. Use with caution. Still in testing.")
+    fun ShowSystemUI() {
+        val window = (context as Activity).window
+        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_VISIBLE)
     }
 
     // On Visibility Changed
@@ -396,7 +416,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
         editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN,
         defaultValue = "True"
     )
-    @SimpleProperty(description = "Show/Hide fullscreen button. Must be configured before creating player.")
+    @SimpleProperty(description = "Show/Hide fullscreen button.")
     fun FullscreenButtonVisible(show: Boolean) {
         showFullscreenButton = show
     }
