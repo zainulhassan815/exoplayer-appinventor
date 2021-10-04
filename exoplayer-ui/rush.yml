@@ -14,8 +14,8 @@ authors:
 
 build:
   # If enabled, you will be able to use Java 8 language features in your extension.
-#  desugar:
-#    enable: true
+  desugar:
+    enable: true
 #    desugar_deps: true
 
   kotlin:
