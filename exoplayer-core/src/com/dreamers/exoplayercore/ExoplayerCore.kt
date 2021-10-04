@@ -13,7 +13,6 @@ import com.google.appinventor.components.annotations.SimpleFunction
 import com.google.appinventor.components.annotations.SimpleProperty
 import com.google.appinventor.components.runtime.*
 import com.google.appinventor.components.runtime.util.YailList
-import com.google.gson.JsonObject
 import org.json.JSONException
 import org.json.JSONObject
 import java.util.*
@@ -91,21 +90,21 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         Log.v(LOG_TAG, "releasePlayer : Released = ${exoplayer == null}")
     }
 
-    private fun MediaMetadata.toJson(): JsonObject {
-        return JsonObject().also { obj ->
-            obj.addProperty("title", this.title.toString())
-            obj.addProperty("artist", this.artist.toString())
-            obj.addProperty("albumTitle", this.albumTitle.toString())
-            obj.addProperty("albumArtist", this.albumArtist.toString())
-            obj.addProperty("displayTitle", this.displayTitle.toString())
-            obj.addProperty("subtitle", this.subtitle.toString())
-            obj.addProperty("description", this.description.toString())
-            obj.addProperty("media_uri", this.mediaUri.toString())
-            obj.addProperty("artwork_uri", this.artworkUri.toString())
-            obj.addProperty("track_number", this.trackNumber)
-            obj.addProperty("total_tracks", this.totalTrackCount)
-            obj.addProperty("year", this.year)
-            obj.addProperty("playable", this.isPlayable)
+    private fun MediaMetadata.toJson(): JSONObject {
+        return JSONObject().also { obj ->
+            obj.put("title", this.title.toString())
+            obj.put("artist", this.artist.toString())
+            obj.put("albumTitle", this.albumTitle.toString())
+            obj.put("albumArtist", this.albumArtist.toString())
+            obj.put("displayTitle", this.displayTitle.toString())
+            obj.put("subtitle", this.subtitle.toString())
+            obj.put("description", this.description.toString())
+            obj.put("media_uri", this.mediaUri.toString())
+            obj.put("artwork_uri", this.artworkUri.toString())
+            obj.put("track_number", this.trackNumber)
+            obj.put("total_tracks", this.totalTrackCount)
+            obj.put("year", this.year)
+            obj.put("playable", this.isPlayable)
         }
     }
 
