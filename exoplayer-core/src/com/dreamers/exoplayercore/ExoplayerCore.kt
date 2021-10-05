@@ -12,6 +12,8 @@ import com.google.appinventor.components.annotations.SimpleEvent
 import com.google.appinventor.components.annotations.SimpleFunction
 import com.google.appinventor.components.annotations.SimpleProperty
 import com.google.appinventor.components.runtime.*
+import com.google.appinventor.components.runtime.util.JsonUtil
+import com.google.appinventor.components.runtime.util.YailDictionary
 import com.google.appinventor.components.runtime.util.YailList
 import org.json.JSONException
 import org.json.JSONObject
@@ -90,8 +92,8 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         Log.v(LOG_TAG, "releasePlayer : Released = ${exoplayer == null}")
     }
 
-    private fun MediaMetadata.toJson(): JSONObject {
-        return JSONObject().also { obj ->
+    private fun MediaMetadata.toJson(): YailDictionary {
+        val data = JSONObject().also { obj ->
             obj.put("title", this.title.toString())
             obj.put("artist", this.artist.toString())
             obj.put("albumTitle", this.albumTitle.toString())
@@ -106,6 +108,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
             obj.put("year", this.year)
             obj.put("playable", this.isPlayable)
         }
+        return JsonUtil.getDictionaryFromJsonObject(data)
     }
 
     private fun JSONObject.getStringOrNull(key: String): String? {
