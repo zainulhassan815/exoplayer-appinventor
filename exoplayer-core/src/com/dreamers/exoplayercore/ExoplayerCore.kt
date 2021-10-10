@@ -3,7 +3,6 @@ package com.dreamers.exoplayercore
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import android.view.TextureView
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.util.Util
@@ -21,7 +20,7 @@ import java.util.*
 
 @Suppress("FunctionName")
 class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(container.`$form`()), Component,
-    OnPauseListener, OnStopListener, OnResumeListener {
+    OnPauseListener, OnStopListener, OnResumeListener, OnDestroyListener {
 
     private val context: Context = container.`$context`()
     private var exoplayer: SimpleExoPlayer? = null
@@ -31,6 +30,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         form.registerForOnPause(this)
         form.registerForOnStop(this)
         form.registerForOnResume(this)
+        form.registerForOnDestroy(this)
     }
 
     private var currentWindow: Int = 0
@@ -41,7 +41,6 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     private var playbackListeners: Player.Listener? = null
     private val mediaItems: ArrayList<MediaItem> = arrayListOf()
 
-    private var surface: TextureView? = null
 
     companion object {
         private const val LOG_TAG = "DreamersExoPlayer"
@@ -69,6 +68,11 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         if ((Util.SDK_INT < 24 || exoplayer == null)) {
             resumePlayer()
         }
+    }
+
+    override fun onDestroy() {
+        Log.v(LOG_TAG, "onResume")
+        releasePlayer()
     }
 
     // Check if should resume player.
@@ -149,10 +153,6 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         exoplayer = SimpleExoPlayer.Builder(context)
             .build()
             .also { exoplayer ->
-
-                if (surface != null) {
-                    exoplayer.setVideoTextureView(surface)
-                }
 
                 exoplayer.seekTo(currentWindow, playbackPosition)
                 exoplayer.playWhenReady = shouldPlayWhenReady
