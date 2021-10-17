@@ -110,3 +110,10 @@ internal fun getSizeType(type: String): Int = when (type) {
     ExoplayerUi.TEXT_SIE_TYPE_ABSOLUTE -> Cue.TEXT_SIZE_TYPE_ABSOLUTE
     else -> Cue.TEXT_SIZE_TYPE_FRACTIONAL
 }
+
+internal fun getSurfaceType(type: String): Int = when(type) {
+    ExoplayerUi.SURFACE_TYPE_NONE -> PlayerView.SURFACE_TYPE_NONE
+    ExoplayerUi.SURFACE_TYPE_SURFACE_VIEW -> PlayerView.SURFACE_TYPE_SURFACE_VIEW
+    ExoplayerUi.SURFACE_TYPE_TEXTURE_VIEW -> PlayerView.SURFACE_TYPE_TEXTURE_VIEW
+    else -> PlayerView.SURFACE_TYPE_SURFACE_VIEW
+}

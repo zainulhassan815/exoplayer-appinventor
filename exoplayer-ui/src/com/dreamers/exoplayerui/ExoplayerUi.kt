@@ -80,6 +80,8 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     private var thumbSizeDisabled: Int = DefaultTimeBar.DEFAULT_SCRUBBER_DISABLED_SIZE_DP
     private var thumbSizeActive: Int = DefaultTimeBar.DEFAULT_SCRUBBER_DRAGGED_SIZE_DP
 
+    private var surfaceType: Int = PlayerView.SURFACE_TYPE_SURFACE_VIEW
+
     enum class PlayerViewType {
         SimplePlayerView,
         StyledPlayerView
@@ -108,6 +110,9 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
         const val EDGE_TYPE_DEPRESSED = "Depressed"
         const val TEXT_SIE_TYPE_FRACTION = "Fractional Size"
         const val TEXT_SIE_TYPE_ABSOLUTE = "Absolute Size"
+        const val SURFACE_TYPE_SURFACE_VIEW = "Surface View"
+        const val SURFACE_TYPE_TEXTURE_VIEW = "Texture View"
+        const val SURFACE_TYPE_NONE = "None"
     }
 
     // On Pause
@@ -148,6 +153,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
         val viewGroup: ViewGroup = layout.view as ViewGroup
         if (isDebugMode) Log.v(LOG_TAG, "createLayout | Debug mode : true")
         val playerAttributes = PlayerAttributes(
+            /* surfaceType */surfaceType,
             /* useArtwork */useArtwork,
             /* resizeMode */getResizeMode(resizeMode),
             /* controllerTimeout */controllerTimeout,
@@ -840,4 +846,25 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     fun ActiveThumbSize(size: Int) {
         thumbSizeActive = size
     }
+
+    // Surface Type
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_CHOICES,
+        editorArgs = [SURFACE_TYPE_NONE, SURFACE_TYPE_SURFACE_VIEW, SURFACE_TYPE_TEXTURE_VIEW],
+        defaultValue = SURFACE_TYPE_SURFACE_VIEW
+    )
+    @SimpleProperty(description = "Set surface type for player.")
+    fun SurfaceType(type: String) {
+        surfaceType = getSurfaceType(type)
+    }
+
+    @SimpleProperty
+    fun SurfaceTypeSurfaceView() = SURFACE_TYPE_SURFACE_VIEW
+
+    @SimpleProperty
+    fun SurfaceTypeTextureView() = SURFACE_TYPE_TEXTURE_VIEW
+
+    @SimpleProperty
+    fun SurfaceTypeNone() = SURFACE_TYPE_NONE
+
 }
