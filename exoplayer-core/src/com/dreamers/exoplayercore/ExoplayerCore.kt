@@ -30,6 +30,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
 
     init {
         // Need to register extension for activity changes
+        Log.v(LOG_TAG,"Registering for Activity Changes")
         form.registerForOnPause(this)
         form.registerForOnStop(this)
         form.registerForOnResume(this)
@@ -41,7 +42,6 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     private var shouldPlayWhenReady = false
 
     private var isPlayerInitialized = false
-//    private var playbackListeners: Player.Listener? = null
     private val mediaItems: ArrayList<MediaItem> = arrayListOf()
 
 
@@ -91,7 +91,6 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
             playbackPosition = this.currentPosition
             currentWindow = this.currentWindowIndex
             shouldPlayWhenReady = this.playWhenReady
-//            playbackListeners?.let { removeListener(it) }
             removeListener(this@ExoplayerCore)
             release()
         }
@@ -170,86 +169,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
                     exoplayer.addMediaItems(mediaItems)
                 }
 
-                // Assign Listeners
-//                playbackListeners = object : Player.Listener {
-//                    override fun onPlaybackStateChanged(state: Int) {
-//                        super.onPlaybackStateChanged(state)
-//                        Log.v(LOG_TAG, "onPlaybackStateChanged : $state")
-//                        OnStateChanged(state)
-//                    }
-//
-//                    override fun onPlayerError(error: ExoPlaybackException) {
-//                        super.onPlayerError(error)
-//                        Log.e(LOG_TAG, "onPlayerError : $error")
-//                        OnError(error.toString())
-//                    }
-//
-//                    override fun onIsLoadingChanged(isLoading: Boolean) {
-//                        super.onIsLoadingChanged(isLoading)
-//                        Log.v(LOG_TAG, "onIsLoadingChanged : $isLoading")
-//                        OnLoadingChanged(isLoading)
-//                    }
-//
-//                    override fun onVideoSizeChanged(videoSize: VideoSize) {
-//                        super.onVideoSizeChanged(videoSize)
-//                        Log.i(LOG_TAG, "onVideoSizeChanged : $videoSize")
-//                        OnVideoSizeChanged(
-//                            videoSize.width,
-//                            videoSize.height,
-//                            videoSize.pixelWidthHeightRatio,
-//                            videoSize.unappliedRotationDegrees
-//                        )
-//                    }
-//
-//                    override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
-//                        super.onDeviceVolumeChanged(volume, muted)
-//                        Log.v(LOG_TAG, "onDeviceVolumeChanged : Volume = $volume | Muted : $muted")
-//                        OnVolumeChanged(volume, muted)
-//                    }
-//
-//                    override fun onRenderedFirstFrame() {
-//                        super.onRenderedFirstFrame()
-//                        Log.v(LOG_TAG, "onRenderedFirstFrame")
-//                        OnRenderFirstFrame()
-//                    }
-//
-//                    override fun onIsPlayingChanged(isPlaying: Boolean) {
-//                        super.onIsPlayingChanged(isPlaying)
-//                        Log.v(LOG_TAG, "onIsPlayingChanged : IsPlaying = $isPlaying")
-//                        OnIsPlayingChanged(isPlaying)
-//                    }
-//
-//                    override fun onRepeatModeChanged(repeatMode: Int) {
-//                        super.onRepeatModeChanged(repeatMode)
-//                        Log.v(LOG_TAG, "onRepeatModeChanged : RepeatMode = $repeatMode")
-//                        OnRepeatModeChanged(repeatMode)
-//                    }
-//
-//                    override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
-//                        super.onShuffleModeEnabledChanged(shuffleModeEnabled)
-//                        Log.v(LOG_TAG, "onShuffleModeEnabledChanged : ShuffleModeEnabled = $shuffleModeEnabled")
-//                        OnShuffleModeEnabledChanged(shuffleModeEnabled)
-//                    }
-//
-//                    override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-//                        super.onMediaMetadataChanged(mediaMetadata)
-//                        val meta = mediaMetadata.toJson()
-//                        Log.v(LOG_TAG, "onMediaMetadataChanged : MetaData = $meta")
-//                        OnMetadataChanged(meta)
-//                    }
-//
-//                    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-//                        super.onMediaItemTransition(mediaItem, reason)
-//                        Log.v(
-//                            LOG_TAG,
-//                            "onMediaItemTransition : MediaUrl = ${mediaItem?.mediaId.toString()} | Reason = $reason"
-//                        )
-//                        OnMediaItemTransition(mediaItem?.mediaId.toString(), reason)
-//                    }
-//                }
-
                 // Add Listeners to player
-//                playbackListeners?.let { exoplayer.addListener(it) }
                 exoplayer.addListener(this)
                 // Add Analytics Logger to player
                 exoplayer.addAnalyticsListener(EventLogger(trackSelector!!))

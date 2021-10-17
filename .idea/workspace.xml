@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="b02a97d2-5bc5-4735-8a01-18349a49fb48" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/exoplayer-core/.rush/data.hive" beforeDir="false" afterPath="$PROJECT_DIR$/exoplayer-core/.rush/data.hive" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/exoplayer-core/out/com.dreamers.exoplayercore.aix" beforeDir="false" afterPath="$PROJECT_DIR$/exoplayer-core/out/com.dreamers.exoplayercore.aix" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
