@@ -80,6 +80,8 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     private var thumbSizeDisabled: Int = DefaultTimeBar.DEFAULT_SCRUBBER_DISABLED_SIZE_DP
     private var thumbSizeActive: Int = DefaultTimeBar.DEFAULT_SCRUBBER_DRAGGED_SIZE_DP
 
+    private var surfaceType: Int = PlayerView.SURFACE_TYPE_SURFACE_VIEW
+
     enum class PlayerViewType {
         SimplePlayerView,
         StyledPlayerView
@@ -108,6 +110,9 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
         const val EDGE_TYPE_DEPRESSED = "Depressed"
         const val TEXT_SIE_TYPE_FRACTION = "Fractional Size"
         const val TEXT_SIE_TYPE_ABSOLUTE = "Absolute Size"
+        const val SURFACE_TYPE_SURFACE_VIEW = "Surface View"
+        const val SURFACE_TYPE_TEXTURE_VIEW = "Texture View"
+        const val SURFACE_TYPE_NONE = "None"
     }
 
     // On Pause
@@ -142,12 +147,13 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
         }
 
     // Initialize player view
-    private fun initialize(layout: HVArrangement, exoplayer: SimpleExoPlayer, playerType: PlayerViewType) {
+    private fun initialize(layout: HVArrangement, exoPlayer: SimpleExoPlayer, playerType: PlayerViewType) {
 
         this.playerType = playerType
         val viewGroup: ViewGroup = layout.view as ViewGroup
-        if (isDebugMode) Log.v(LOG_TAG, "createLayout | Debug mode : true")
+        if (isDebugMode) Log.v(LOG_TAG, "initialize | Debug mode : true")
         val playerAttributes = PlayerAttributes(
+            /* surfaceType */surfaceType,
             /* useArtwork */useArtwork,
             /* resizeMode */getResizeMode(resizeMode),
             /* controllerTimeout */controllerTimeout,
@@ -189,7 +195,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
 
         if (playerType == PlayerViewType.SimplePlayerView) {
             playerView = PlayerView(context, timeBarAttributes, playerAttributes).also { view ->
-                view.player = exoplayer
+                view.player = exoPlayer
                 view.setKeepContentOnPlayerReset(true)
                 view.setControllerVisibilityListener {
                     OnVisibilityChanged(it == View.VISIBLE)
@@ -197,7 +203,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
             }
         } else {
             styledPlayerView = StyledPlayerView(context, timeBarAttributes, playerAttributes).also { view ->
-                view.player = exoplayer
+                view.player = exoPlayer
                 view.setKeepContentOnPlayerReset(true)
                 view.setControllerVisibilityListener {
                     OnVisibilityChanged(it == View.VISIBLE)
@@ -283,6 +289,35 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     fun ShowSystemUI() {
         val window = (context as Activity).window
         window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_VISIBLE)
+    }
+
+    // Reassign Exoplayer Instance (Trying to fix player not working after screen off)
+    @SimpleProperty(description = "Assign Exoplayer Instance")
+    fun Player(exoplayer: Any?) {
+        if (exoplayer != null && exoplayer is SimpleExoPlayer) {
+            if (playerType == PlayerViewType.SimplePlayerView)
+                playerView?.player = exoplayer
+            else if (playerType == PlayerViewType.StyledPlayerView)
+                styledPlayerView?.player = exoplayer
+        }
+    }
+
+    // Keeps the screen on
+    @SimpleProperty(description = "Change screen mode. Use this block after creating player view.")
+    fun KeepScreenOn(keep: Boolean) {
+        if (playerType == PlayerViewType.SimplePlayerView)
+            playerView?.keepScreenOn = keep
+        else if (playerType == PlayerViewType.StyledPlayerView)
+            styledPlayerView?.keepScreenOn = keep
+    }
+
+    // Keeps content on player reset
+    @SimpleProperty(description = "Set whether to keep content on player reset.")
+    fun KeepContentOnPlayerReset(keep: Boolean) {
+        if (playerType == PlayerViewType.SimplePlayerView)
+            playerView?.setKeepContentOnPlayerReset(keep)
+        else if (playerType == PlayerViewType.StyledPlayerView)
+            styledPlayerView?.setKeepContentOnPlayerReset(keep)
     }
 
     // On Visibility Changed
@@ -840,4 +875,26 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     fun ActiveThumbSize(size: Int) {
         thumbSizeActive = size
     }
+
+    // Surface Type
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_CHOICES,
+        editorArgs = [SURFACE_TYPE_NONE, SURFACE_TYPE_SURFACE_VIEW, SURFACE_TYPE_TEXTURE_VIEW],
+        defaultValue = SURFACE_TYPE_SURFACE_VIEW
+    )
+    @SimpleProperty(description = "Set surface type for player.")
+    fun SurfaceType(type: String) {
+        Log.v(LOG_TAG,"SurfaceType | type: $type")
+        surfaceType = getSurfaceType(type)
+    }
+
+    @SimpleProperty
+    fun SurfaceTypeSurfaceView() = SURFACE_TYPE_SURFACE_VIEW
+
+    @SimpleProperty
+    fun SurfaceTypeTextureView() = SURFACE_TYPE_TEXTURE_VIEW
+
+    @SimpleProperty
+    fun SurfaceTypeNone() = SURFACE_TYPE_NONE
+
 }
