@@ -30,7 +30,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
 
     init {
         // Need to register extension for activity changes
-        Log.v(LOG_TAG,"Registering for Activity Changes")
+        Log.v(LOG_TAG, "Registering for Activity Changes")
         form.registerForOnPause(this)
         form.registerForOnStop(this)
         form.registerForOnResume(this)
@@ -82,6 +82,9 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     private fun resumePlayer() {
         if (exoplayer == null && isPlayerInitialized) {
             setupPlayer()
+            // Call app resume here
+            Log.v(LOG_TAG,"OnAppResume")
+            OnAppResume()
         }
     }
 
@@ -94,7 +97,6 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
             removeListener(this@ExoplayerCore)
             release()
         }
-//        playbackListeners = null
         exoplayer = null
         trackSelector = null
         Log.v(LOG_TAG, "releasePlayer : Released = ${exoplayer == null}")
@@ -375,6 +377,11 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
 
     // Events
     // =============================
+    @SimpleEvent(description = "Event raised when application is resumed. Here you need to reassign Exoplayer to ExoplayerUI.")
+    fun OnAppResume() {
+        EventDispatcher.dispatchEvent(this, "OnAppResume")
+    }
+
     @SimpleEvent(description = "Event raised when playback state changes.")
     fun OnStateChanged(state: Int) {
         EventDispatcher.dispatchEvent(this, "OnStateChanged", state)
