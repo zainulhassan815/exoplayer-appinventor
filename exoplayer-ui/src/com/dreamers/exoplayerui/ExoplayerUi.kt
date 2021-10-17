@@ -147,7 +147,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
         }
 
     // Initialize player view
-    private fun initialize(layout: HVArrangement, exoplayer: SimpleExoPlayer, playerType: PlayerViewType) {
+    private fun initialize(layout: HVArrangement, exoPlayer: SimpleExoPlayer, playerType: PlayerViewType) {
 
         this.playerType = playerType
         val viewGroup: ViewGroup = layout.view as ViewGroup
@@ -195,7 +195,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
 
         if (playerType == PlayerViewType.SimplePlayerView) {
             playerView = PlayerView(context, timeBarAttributes, playerAttributes).also { view ->
-                view.player = exoplayer
+                view.player = exoPlayer
                 view.setKeepContentOnPlayerReset(true)
                 view.setControllerVisibilityListener {
                     OnVisibilityChanged(it == View.VISIBLE)
@@ -203,7 +203,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
             }
         } else {
             styledPlayerView = StyledPlayerView(context, timeBarAttributes, playerAttributes).also { view ->
-                view.player = exoplayer
+                view.player = exoPlayer
                 view.setKeepContentOnPlayerReset(true)
                 view.setControllerVisibilityListener {
                     OnVisibilityChanged(it == View.VISIBLE)
@@ -242,7 +242,6 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     // Create Player View
     @SimpleFunction(description = "Create player ui.")
     fun CreateSimplePlayer(layout: HVArrangement, exoplayer: Any?) {
-        Log.v(LOG_TAG,"CreateSimplePlayer | shouldProceed : ${exoplayer != null && exoplayer is SimpleExoPlayer}")
         if (exoplayer != null && exoplayer is SimpleExoPlayer) {
             initialize(layout, exoplayer, PlayerViewType.SimplePlayerView)
         }
@@ -251,7 +250,6 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     // Create Styled Player View
     @SimpleFunction(description = "Create styled player ui. A bit more complex ui then simple player.")
     fun CreateStyledPlayer(layout: HVArrangement, exoplayer: Any?) {
-        Log.v(LOG_TAG,"CreateStyledPlayer | shouldProceed : ${exoplayer != null && exoplayer is SimpleExoPlayer}")
         if (exoplayer != null && exoplayer is SimpleExoPlayer) {
             initialize(layout, exoplayer, PlayerViewType.StyledPlayerView)
         }
@@ -291,6 +289,17 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     fun ShowSystemUI() {
         val window = (context as Activity).window
         window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_VISIBLE)
+    }
+
+    // Reassign Exoplayer Instance (Trying to fix player not working after screen off)
+    @SimpleProperty(description = "Assign Exoplayer Instance")
+    fun Player(exoplayer: Any?) {
+        if (exoplayer != null && exoplayer is SimpleExoPlayer) {
+            if (playerType == PlayerViewType.SimplePlayerView)
+                playerView?.player = exoplayer
+            else if (playerType == PlayerViewType.StyledPlayerView)
+                styledPlayerView?.player = exoplayer
+        }
     }
 
     // Keeps the screen on
