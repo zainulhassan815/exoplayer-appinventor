@@ -1,7 +1,7 @@
 {
   "functions": [
     {
-      "image": "../images/exoplayer-ui/create_simple.png",
+      "image": "./images/exoplayer-ui/create_simple.png",
       "title": "Create Simple Player",
       "description": "Create player view in a layout with basic controls.",
       "params": [
@@ -16,7 +16,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/create_styled.png",
+      "image": "./images/exoplayer-ui/create_styled.png",
       "title": "Create Styled Player",
       "description": "Create player view in a layout with extra controls like toggle captions, track selection etc.",
       "params": [
@@ -31,29 +31,29 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/show_controls.png",
+      "image": "./images/exoplayer-ui/show_controls.png",
       "title": "Show Controls",
       "description": "Show player controls."
     },
     {
-      "image": "../images/exoplayer-ui/hide_controls.png",
+      "image": "./images/exoplayer-ui/hide_controls.png",
       "title": "Hide Controls",
       "description": "Hide player controls."
     },
     {
-      "image": "../images/exoplayer-ui/show_system_ui.png",
+      "image": "./images/exoplayer-ui/show_system_ui.png",
       "title": "Show System UI",
       "description": "Can be used to exit fullscreen. The function is in experimental phase and may not work properly."
     },
     {
-      "image": "../images/exoplayer-ui/hide_system_ui.png",
+      "image": "./images/exoplayer-ui/hide_system_ui.png",
       "title": "Hide System UI",
       "description": "Can be used to enter fullscreen. The function is in experimental phase and may not work properly."
     }
   ],
   "events": [
     {
-      "image": "../images/exoplayer-ui/on_fullscreen_changed.png",
+      "image": "./images/exoplayer-ui/on_fullscreen_changed.png",
       "title": "On Fullscreen Changes",
       "description": "Event raised when fullscreen button is clicked and its status changes. Here you can perform different functions to enter or exit fullscreen.",
       "params": [
@@ -64,7 +64,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/on_visibility_changed.png",
+      "image": "./images/exoplayer-ui/on_visibility_changed.png",
       "title": "On Visibility Changes",
       "description": "Event raised when controls visibility changes. Here you can update your UI. For example : You can show/hide a title label etch.",
       "params": [
@@ -77,7 +77,7 @@
   ],
   "properties": [
     {
-      "image": "../images/exoplayer-ui/use_artwork.png",
+      "image": "./images/exoplayer-ui/use_artwork.png",
       "title": "Use Artwork",
       "description": "Set whether to show an image when playing an audio file.",
       "params": [
@@ -88,7 +88,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/default_thumbnail.png",
+      "image": "./images/exoplayer-ui/default_thumbnail.png",
       "title": "Default Thumbnail",
       "description": "Set default thumbnail in case if there is no thumbnail in media metadata, the player will show this thumbnail. It works only for audio files.",
       "params": [
@@ -99,7 +99,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/repeat_mode.png",
+      "image": "./images/exoplayer-ui/repeat_mode.png",
       "title": "Repeat Mode",
       "description": "Set repeat toggle modes. This will show/hide repeat toggle button.",
       "params": [
@@ -110,7 +110,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/show_loading.png",
+      "image": "./images/exoplayer-ui/show_loading.png",
       "title": "Show Loading",
       "description": "Set when to show loading progress indicator.",
       "params": [
@@ -121,7 +121,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/resize_mode.png",
+      "image": "./images/exoplayer-ui/resize_mode.png",
       "title": "Resize Mode",
       "description": "Set video resize mode.",
       "params": [
@@ -132,7 +132,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/auto_show_controller.png",
+      "image": "./images/exoplayer-ui/auto_show_controller.png",
       "title": "Auto Show Controller",
       "description": "Automatically show controller when media is interupted during playback.",
       "params": [
@@ -143,7 +143,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/controller_timeout.png",
+      "image": "./images/exoplayer-ui/controller_timeout.png",
       "title": "Controller Timeout",
       "description": "Milliseconds after which the controller should hide automatically.",
       "params": [
@@ -154,7 +154,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/hide_on_touch.png",
+      "image": "./images/exoplayer-ui/hide_on_touch.png",
       "title": "Hide On Touch",
       "description": "Automatically hide controller on touch.",
       "params": [
@@ -165,7 +165,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/use_controller.png",
+      "image": "./images/exoplayer-ui/use_controller.png",
       "title": "Use Controller",
       "description": "Whether to use default controller or not.",
       "params": [
@@ -176,7 +176,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/animation_enabled.png",
+      "image": "./images/exoplayer-ui/animation_enabled.png",
       "title": "Animation Enabled",
       "description": "Enable/Disable controls animation.",
       "params": [
@@ -187,7 +187,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/track_properties/thumb_size.png",
+      "image": "./images/exoplayer-ui/track_properties/thumb_size.png",
       "title": "Thumb Size",
       "description": "Thumb size when slider is visible but is not being dragged.",
       "params": [
@@ -198,7 +198,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/track_properties/active_thumb_size.png",
+      "image": "./images/exoplayer-ui/track_properties/active_thumb_size.png",
       "title": "Active Thumb Size",
       "description": "Thumb size when slider is being dragged by the user.",
       "params": [
@@ -209,7 +209,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/track_properties/disabled_thumb_size.png",
+      "image": "./images/exoplayer-ui/track_properties/disabled_thumb_size.png",
       "title": "Disabled Thumb Size",
       "description": "Thumb size when slider is disabled.",
       "params": [
@@ -220,7 +220,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/track_properties/track_color.png",
+      "image": "./images/exoplayer-ui/track_properties/track_color.png",
       "title": "Track Color",
       "description": "Track color.",
       "params": [
@@ -231,7 +231,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/track_properties/buffered_color.png",
+      "image": "./images/exoplayer-ui/track_properties/buffered_color.png",
       "title": "Buffered Color",
       "description": "Buffered track color.",
       "params": [
@@ -242,7 +242,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/track_properties/progress_color.png",
+      "image": "./images/exoplayer-ui/track_properties/progress_color.png",
       "title": "Progress Color",
       "description": "Track progress color.",
       "params": [
@@ -253,7 +253,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/subtitle_properties/background_color.png",
+      "image": "./images/exoplayer-ui/subtitle_properties/background_color.png",
       "title": "Subtitles Background Color",
       "description": "Set background color for subtitles.",
       "params": [
@@ -264,7 +264,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/subtitle_properties/foreground_color.png",
+      "image": "./images/exoplayer-ui/subtitle_properties/foreground_color.png",
       "title": "Subtitles Foreground Color",
       "description": "Set text or foreground color for subtitles.",
       "params": [
@@ -275,7 +275,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/subtitle_properties/edge_color.png",
+      "image": "./images/exoplayer-ui/subtitle_properties/edge_color.png",
       "title": "Subtitles Edge Color",
       "description": "Set edge color for subtitles. I am not quite sure what it does, so you can experiment with this to find out more about it.",
       "params": [
@@ -286,7 +286,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/subtitle_properties/window_color.png",
+      "image": "./images/exoplayer-ui/subtitle_properties/window_color.png",
       "title": "Subtitles Window Color",
       "description": "Set color for whole subtitle layout.",
       "params": [
@@ -297,7 +297,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/subtitle_properties/text_size_type.png",
+      "image": "./images/exoplayer-ui/subtitle_properties/text_size_type.png",
       "title": "Text Size Type",
       "description": "Specify how you want to scale subtitles font size.",
       "params": [
@@ -316,7 +316,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/subtitle_properties/text_size_absolute.png",
+      "image": "./images/exoplayer-ui/subtitle_properties/text_size_absolute.png",
       "title": "Absolute Text Size",
       "description": "set a specific font size for subtitles irrespective of the player size.",
       "params": [
@@ -327,7 +327,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/subtitle_properties/text_size_fraction.png",
+      "image": "./images/exoplayer-ui/subtitle_properties/text_size_fraction.png",
       "title": "Fractional Text Size",
       "description": "Set font size for subtitles relative the player size.",
       "params": [
@@ -338,7 +338,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/subtitle_properties/render_view_type.png",
+      "image": "./images/exoplayer-ui/subtitle_properties/render_view_type.png",
       "title": "Subtitle Render View Type",
       "description": "Specify what type of view to use for rendering subtitles.",
       "params": [
@@ -357,7 +357,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/subtitle_properties/edge_type.png",
+      "image": "./images/exoplayer-ui/subtitle_properties/edge_type.png",
       "title": "Subtitle Edge Type",
       "description": "",
       "params": [
@@ -368,7 +368,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/subtitle_properties/bottom_padding.png",
+      "image": "./images/exoplayer-ui/subtitle_properties/bottom_padding.png",
       "title": "Subtitle Bottom Padding",
       "description": "Set bottom padding for subtitle.",
       "params": [
@@ -379,7 +379,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/subtitle_properties/ignore_padding.png",
+      "image": "./images/exoplayer-ui/subtitle_properties/ignore_padding.png",
       "title": "Ignore Bottom Padding",
       "description": "Whether to ignore bottom padding or not.",
       "params": [
@@ -390,7 +390,7 @@
       ]
     },
     {
-      "image": "../images/exoplayer-ui/subtitle_properties/typeface.png",
+      "image": "./images/exoplayer-ui/subtitle_properties/typeface.png",
       "title": "Subtitles Typeface",
       "description": "Specify a custom font for subtitles.",
       "params": [
