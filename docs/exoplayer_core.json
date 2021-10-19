@@ -1,17 +1,17 @@
 {
   "functions": [
     {
-      "image": "./images/exoplayer_core/create_player.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/create_player.png",
       "title": "Create ExoPlayer",
       "description": "Create and initialize player. Must be called before using with Exoplayer UI."
     },
     {
-      "image": "./images/exoplayer_core/get_player.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/get_player.png",
       "title": "Get ExoPlayer",
       "description": "Returns the Exoplayer instance that you can use in Exoplayer UI - CreatePlayer"
     },
     {
-      "image": "./images/exoplayer_core/add_media.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/add_media.png",
       "title": "Add Media",
       "description": "Add a new media item to playlist. You can use this block to add multiple media items which are then managed by the player in the form of playlist.",
       "params": [
@@ -26,7 +26,7 @@
       ]
     },
     {
-      "image": "./images/exoplayer_core/remove_media_item.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/remove_media_item.png",
       "title": "Remove Media",
       "description": "Remove media item at specific index from playlist.",
       "params": [
@@ -37,27 +37,27 @@
       ]
     },
     {
-      "image": "./images/exoplayer_core/clear_media_items.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/clear_media_items.png",
       "title": "Clear Media Items",
       "description": "Remove all media items from playlist."
     },
     {
-      "image": "./images/exoplayer_core/play.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/play.png",
       "title": "Play",
       "description": "Start media playback."
     },
     {
-      "image": "./images/exoplayer_core/pause.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/pause.png",
       "title": "Pause",
       "description": "Pause media playback."
     },
     {
-      "image": "./images/exoplayer_core/stop.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/stop.png",
       "title": "Stop",
       "description": "Stop current media playback."
     },
     {
-      "image": "./images/exoplayer_core/seek_to.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/seek_to.png",
       "title": "Seek To",
       "description": "Seek to specific milliseconds.",
       "params": [
@@ -68,7 +68,7 @@
       ]
     },
     {
-      "image": "./images/exoplayer_core/format.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/format.png",
       "title": "Format",
       "description": "Convert milliseconds to hh:mm:ss format.",
       "params": [
@@ -81,12 +81,12 @@
   ],
   "events": [
     {
-      "image": "./images/exoplayer_core/on_render_first_frame.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/on_render_first_frame.png",
       "title": "On Render First Frame",
       "description": "Event raised when player has rendered first media frame."
     },
     {
-      "image": "./images/exoplayer_core/on_state_changed.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/on_state_changed.png",
       "title": "On State Change",
       "description": "Event raised when player state changes.",
       "params": [
@@ -97,7 +97,7 @@
       ]
     },
     {
-      "image": "./images/exoplayer_core/on_is_playing_changed.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/on_is_playing_changed.png",
       "title": "On Is Playing Change",
       "description": "Event raised when current playing state changes.",
       "params": [
@@ -108,7 +108,7 @@
       ]
     },
     {
-      "image": "./images/exoplayer_core/on_loading_changed.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/on_loading_changed.png",
       "title": "On Loading Change",
       "description": "Event raised when loading state changes.",
       "params": [
@@ -119,7 +119,7 @@
       ]
     },
     {
-      "image": "./images/exoplayer_core/on_media_item_transition.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/on_media_item_transition.png",
       "title": "On Media Item Transition",
       "description": "Event raised when media item is changed. Basically when current video/audio is changed and player opens next media item from playlist.",
       "params": [
@@ -134,7 +134,7 @@
       ]
     },
     {
-      "image": "./images/exoplayer_core/on_metadata_changed.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/on_metadata_changed.png",
       "title": "On Metadata Changed",
       "description": "Event raised when media metadata changes. You get a JSON response.",
       "params": [
@@ -145,7 +145,7 @@
       ]
     },
     {
-      "image": "./images/exoplayer_core/on_repeat_mode_changed.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/on_repeat_mode_changed.png",
       "title": "On Repeat Mode Changed",
       "description": "Event raised when repeat mode changes. You get a numerical repeatMode which you can compare with RepeatModes properties and perform function as per your requirement.",
       "params": [
@@ -156,7 +156,7 @@
       ]
     },
     {
-      "image": "./images/exoplayer_core/on_shuffle_mode_enabled_changed.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/on_shuffle_mode_enabled_changed.png",
       "title": "On Shuffle Mode Enabled Changed",
       "description": "Event raised when shuffle mode changes.",
       "params": [
@@ -167,7 +167,7 @@
       ]
     },
     {
-      "image": "./images/exoplayer_core/on_video_size_changed.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/on_video_size_changed.png",
       "title": "On Video Size Changed",
       "description": "Event raised when video size is changed or first measured.",
       "params": [
@@ -190,7 +190,7 @@
       ]
     },
     {
-      "image": "./images/exoplayer_core/on_volume_changed.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/on_volume_changed.png",
       "title": "On Volume Changed",
       "description": "Event raised when device volume changes.",
       "params": [
@@ -205,7 +205,7 @@
       ]
     },
     {
-      "image": "./images/exoplayer_core/on_error.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/on_error.png",
       "title": "On Error",
       "description": "Event raised when there is an error during media playback. Currently the block is not very efficient as it doesn’t provide proper detail for error. In the next version, I will try to error codes and respective error messages.",
       "params": [
@@ -218,7 +218,7 @@
   ],
   "properties": [
     {
-      "image": "./images/exoplayer_core/set_repeat_modes.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/set_repeat_modes.png",
       "title": "Repeat Modes",
       "description": "Set repeat modes for player.",
       "params": [
@@ -229,57 +229,57 @@
       ]
     },
     {
-      "image": "./images/exoplayer_core/repeat_modes.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/repeat_modes.png",
       "title": "Available Repeat Modes",
       "description": "Available repeat modes for player."
     },
     {
-      "image": "./images/exoplayer_core/play_when_ready.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/play_when_ready.png",
       "title": "Play When Ready",
       "description": "Set whether to automatically play when player is ready or not."
     },
     {
-      "image": "./images/exoplayer_core/duration.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/duration.png",
       "title": "Media Duration",
       "description": ""
     },
     {
-      "image": "./images/exoplayer_core/current_position.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/current_position.png",
       "title": "Current Position",
       "description": ""
     },
     {
-      "image": "./images/exoplayer_core/buffered_location.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/buffered_location.png",
       "title": "Buffered Location",
       "description": ""
     },
     {
-      "image": "./images/exoplayer_core/buffered_percentage.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/buffered_percentage.png",
       "title": "Buffered Percentage",
       "description": ""
     },
     {
-      "image": "./images/exoplayer_core/is_loading.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/is_loading.png",
       "title": "Is Loading",
       "description": "Check whether media is loading."
     },
     {
-      "image": "./images/exoplayer_core/is_playing.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/is_playing.png",
       "title": "Is Playing",
       "description": "Check whether media is playing."
     },
     {
-      "image": "./images/exoplayer_core/playback_state.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/playback_state.png",
       "title": "Playback State",
       "description": "Current media playback state."
     },
     {
-      "image": "./images/exoplayer_core/selection_flags.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/selection_flags.png",
       "title": "Selection Flags For Subtitles",
       "description": "Available selection flags for subtitles."
     },
     {
-      "image": "./images/exoplayer_core/transition_reason.png",
+      "image": "https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/docs/images/exoplayer_core/transition_reason.png",
       "title": "Transition Reasons",
       "description": "Available media transition reasons."
     }
