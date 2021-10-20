@@ -1,6 +1,8 @@
 package com.dreamers.exoplayercore
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.media.AudioManager
 import android.net.Uri
 import android.util.Log
 import com.google.android.exoplayer2.*
@@ -27,6 +29,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     private val context: Context = container.`$context`()
     private var exoplayer: SimpleExoPlayer? = null
     private var trackSelector: DefaultTrackSelector? = null
+    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
     init {
         // Need to register extension for activity changes
@@ -361,6 +364,16 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         )
     }
 
+    @SimpleFunction(description = "Increment device volume.")
+    fun IncreaseVolume() {
+        exoplayer?.increaseDeviceVolume()
+    }
+
+    @SimpleFunction(description = "Decrease device volume.")
+    fun DecreaseVolume() {
+        exoplayer?.decreaseDeviceVolume()
+    }
+
     @SimpleProperty(description = "Check if video is playing or not.")
     fun IsPlaying() = exoplayer?.isPlaying ?: false
 
@@ -381,6 +394,30 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
 
     @SimpleProperty(description = "Get the current playback state of exoplayer")
     fun PlaybackState() = exoplayer?.playbackState ?: 0
+
+    @SimpleProperty(description = "Get current device volume")
+    fun DeviceVolume(): Int = exoplayer?.deviceVolume ?: 0
+
+    @SimpleProperty(description = "Set current device volume")
+    fun DeviceVolume(volume: Int) {
+        exoplayer?.deviceVolume = volume
+    }
+
+    @SimpleProperty(description = "Check if device is muted or not")
+    fun DeviceMuted(): Boolean = exoplayer?.isDeviceMuted ?: false
+
+    @SimpleProperty(description = "Toggle device muted state")
+    fun DeviceMuted(muted: Boolean) {
+        exoplayer?.isDeviceMuted = muted
+    }
+
+    @SuppressLint("NewApi")
+    @SimpleProperty(description = "Minimum device volume")
+    fun MinVolume() = audioManager.getStreamMinVolume(AudioManager.STREAM_MUSIC)
+
+    @SuppressLint("NewApi")
+    @SimpleProperty(description = "Maximum device volume")
+    fun MaxVolume() = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
 
     // Events
     // =============================
