@@ -154,8 +154,8 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
             val selectionFlags = jsonObject.getIntOrNull("selection_flags") ?: 0
             return MediaItem.Subtitle(Uri.parse(uri), mimeType, language, selectionFlags, 0, label)
         } catch (e: JSONException) {
-            Log.e(LOG_TAG, "parseSubtitleData | Failed to parse data : $data with error : $e")
-            OnError("Failed to parse data : $data with error : $e")
+            Log.e(LOG_TAG, "parseSubtitleData | Failed to parse data : $data with error : ${e.message}")
+            OnError("Failed to parse data : $data with error : ${e.message}")
         }
         return null
     }
@@ -197,10 +197,10 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         OnStateChanged(state)
     }
 
-    override fun onPlayerError(error: ExoPlaybackException) {
-        super.onPlayerError(error)
-        Log.e(LOG_TAG, "onPlayerError : $error")
-        OnError(error.toString())
+    override fun onPlayerError(e: ExoPlaybackException) {
+        super.onPlayerError(e)
+        Log.e(LOG_TAG, "onPlayerError : ${e.message}")
+        OnError(e.toString())
     }
 
     override fun onIsLoadingChanged(isLoading: Boolean) {
@@ -339,8 +339,8 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
                 exoplayer?.addMediaItem(mediaItem)
             } else throw Exception("Path is null or empty")
         } catch (e: Exception) {
-            Log.e(LOG_TAG, "AddMedia : Error = $e")
-            OnError("AddMedia : Error = $e")
+            Log.e(LOG_TAG, "AddMedia : Error = ${e.message}")
+            OnError("AddMedia : Error = ${e.message}")
         }
     }
 
