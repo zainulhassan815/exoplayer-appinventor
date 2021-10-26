@@ -431,7 +431,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
         showRewindButton = show
     }
 
-    // Show fast forward button
+    // Show fast-forward button
     @DesignerProperty(
         editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN,
         defaultValue = "True"
