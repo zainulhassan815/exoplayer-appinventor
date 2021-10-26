@@ -436,7 +436,10 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
                 .setAllowMultipleOverrides(allowMultipleOverrides)
                 .setTrackNameProvider(trackNameProvider)
                 .build()
-            dialog.show()
+            dialog.apply {
+                setOnDismissListener { OnSelectionDialogDismiss() }
+                show()
+            }
         }
     }
 
@@ -563,6 +566,11 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     @SimpleEvent(description = "Event raised when current media item transitions.")
     fun OnMediaItemTransition(mediaUrl: String, reason: Int) {
         EventDispatcher.dispatchEvent(this, "OnMediaItemTransition", mediaUrl, reason)
+    }
+
+    @SimpleEvent(description = "Event raised when track selection dialog is dismissed.")
+    fun OnSelectionDialogDismiss() {
+        EventDispatcher.dispatchEvent(this,"OnSelectionDialogDismiss")
     }
 
     // Property Getters
