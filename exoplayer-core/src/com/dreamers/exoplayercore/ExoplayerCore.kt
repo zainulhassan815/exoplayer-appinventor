@@ -8,6 +8,9 @@ import android.util.Log
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
+import com.google.android.exoplayer2.trackselection.MappingTrackSelector.MappedTrackInfo
+import com.google.android.exoplayer2.ui.TrackNameProvider
+import com.google.android.exoplayer2.ui.TrackSelectionDialogBuilder
 import com.google.android.exoplayer2.util.EventLogger
 import com.google.android.exoplayer2.util.Util
 import com.google.android.exoplayer2.video.VideoSize
@@ -266,6 +269,47 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         OnMediaItemTransition(mediaItem?.mediaId.toString(), reason)
     }
 
+    private fun getRenderIndex(type: Int = C.TRACK_TYPE_VIDEO): Int? {
+        val trackInfo = trackSelector?.currentMappedTrackInfo
+        val renderCount = trackInfo?.rendererCount ?: 0
+        for (renderIndex in 0 until renderCount) {
+            val trackType: Int? = trackInfo?.getRendererType(renderIndex)
+            if (trackType == type) return renderIndex
+        }
+        return null
+    }
+
+    /**
+     * Returns whether a track selection dialog will have content to display if initialized with the
+     * specified [DefaultTrackSelector] in its current state.
+     */
+    private fun willHaveContent(trackSelector: DefaultTrackSelector, rendererIndex: Int): Boolean {
+        val mappedTrackInfo = trackSelector.currentMappedTrackInfo
+        return mappedTrackInfo != null && willHaveContent(mappedTrackInfo, rendererIndex)
+    }
+
+    /**
+     * Returns whether a track selection dialog will have content to display if initialized with the
+     * specified [MappedTrackInfo].
+     */
+    private fun willHaveContent(mappedTrackInfo: MappedTrackInfo, rendererIndex: Int): Boolean {
+        return hasTracks(mappedTrackInfo, rendererIndex)
+    }
+
+    private fun hasTracks(mappedTrackInfo: MappedTrackInfo, rendererIndex: Int): Boolean {
+        val trackGroupArray = mappedTrackInfo.getTrackGroups(rendererIndex)
+        if (trackGroupArray.length == 0) {
+            return false
+        }
+        val trackType = mappedTrackInfo.getRendererType(rendererIndex)
+        return isSupportedTrackType(trackType)
+    }
+
+    private fun isSupportedTrackType(trackType: Int): Boolean = when (trackType) {
+        C.TRACK_TYPE_VIDEO, C.TRACK_TYPE_AUDIO, C.TRACK_TYPE_TEXT -> true
+        else -> false
+    }
+
     /** Get exoplayer instance */
     @SimpleFunction(description = "Get Exoplayer instance to use in exoplayer ui")
     fun Player(): Any? = exoplayer
@@ -373,6 +417,46 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     fun DecreaseVolume() {
         exoplayer?.decreaseDeviceVolume()
     }
+
+    @SimpleFunction(description = "Show a dialog to override track selection.")
+    fun ShowSelectionDialog(
+        title: String,
+        trackType: Int,
+        showDisabledOptions: Boolean,
+        allowAdaptiveSelections: Boolean,
+        allowMultipleOverrides: Boolean
+    ) {
+        if (CanShowDialog(trackType)) {
+            val rendererIndex = getRenderIndex(trackType)
+            val trackNameProvider =
+                if (trackType == C.TRACK_TYPE_VIDEO) TrackNameProvider { format -> "${format.width} x ${format.height}" } else null
+            val dialog = TrackSelectionDialogBuilder(context, title, trackSelector!!, rendererIndex!!)
+                .setShowDisableOption(showDisabledOptions)
+                .setAllowAdaptiveSelections(allowAdaptiveSelections)
+                .setAllowMultipleOverrides(allowMultipleOverrides)
+                .setTrackNameProvider(trackNameProvider)
+                .build()
+            dialog.show()
+        }
+    }
+
+    @SimpleFunction(description = "Check whether you can show a track selection dialog for given track type.")
+    fun CanShowDialog(trackType: Int): Boolean {
+        val rendererIndex = getRenderIndex(trackType)
+        return if (rendererIndex != null && trackSelector != null) willHaveContent(
+            trackSelector!!,
+            rendererIndex
+        ) else false
+    }
+
+    @SimpleProperty
+    fun TrackTypeVideo() = C.TRACK_TYPE_VIDEO
+
+    @SimpleProperty
+    fun TrackTypeAudio() = C.TRACK_TYPE_AUDIO
+
+    @SimpleProperty
+    fun TrackTypeText() = C.TRACK_TYPE_TEXT
 
     @SimpleProperty(description = "Check if video is playing or not.")
     fun IsPlaying() = exoplayer?.isPlaying ?: false
