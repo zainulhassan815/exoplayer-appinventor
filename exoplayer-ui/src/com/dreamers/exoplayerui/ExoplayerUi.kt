@@ -47,6 +47,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     private var showFastForwardButton: Boolean = true
     private var showSubtitlesButton: Boolean = true
     private var showFullscreenButton: Boolean = true
+    private var showVideoSettingsButton: Boolean = true
     private var hideOnTouch: Boolean = true
     private var autoShowController: Boolean = true
     private var useArtwork: Boolean = true
@@ -173,6 +174,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
             /* showShuffleButton */showShuffleButton,
             /* showSubtitleButton */showSubtitlesButton,
             /* showFullscreenButton */showFullscreenButton,
+            /* showVideoSettingsButton */showVideoSettingsButton,
             /* animationEnabled */animationEnabled
         )
 
@@ -212,6 +214,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
                     view.setControllerOnFullScreenModeChangedListener {
                         OnFullscreenChanged(it)
                     }
+                view.setVideoSettingsButtonListener { OnVideoSettingsButtonClick() }
             }
         }
 
@@ -330,6 +333,12 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     @SimpleEvent(description = "Event raised when fullscreen button is clicked.")
     fun OnFullscreenChanged(isFullScreen: Boolean) {
         EventDispatcher.dispatchEvent(this, "OnFullscreenChanged", isFullScreen)
+    }
+
+    // On Video Settings Button Click
+    @SimpleEvent(description = "Event raised when video settings button is clicked.")
+    fun OnVideoSettingsButtonClick() {
+        EventDispatcher.dispatchEvent(this, "OnVideoSettingsButtonClick")
     }
 
     // Set Repeat Mode
@@ -454,6 +463,17 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     @SimpleProperty(description = "Show/Hide fullscreen button.")
     fun FullscreenButtonVisible(show: Boolean) {
         showFullscreenButton = show
+    }
+
+    // Show video settings button
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN,
+        defaultValue = "True"
+    )
+    @SimpleProperty(description = "Show/Hide video settings button.")
+    fun VideoSettingsButtonVisible(show: Boolean) {
+        showVideoSettingsButton = show
+        styledPlayerView?.setShowVideoSettingsButton(show)
     }
 
     // Show Loading
