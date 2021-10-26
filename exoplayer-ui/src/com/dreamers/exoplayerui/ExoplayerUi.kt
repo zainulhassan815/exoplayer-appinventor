@@ -215,6 +215,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
                         OnFullscreenChanged(it)
                     }
                 view.setVideoSettingsButtonListener { OnVideoSettingsButtonClick() }
+                view.setControllerOnSettingsWindowDismissListener { OnSettingsWindowDismiss(it) }
             }
         }
 
@@ -342,6 +343,15 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     fun OnVideoSettingsButtonClick() {
         EventDispatcher.dispatchEvent(this, "OnVideoSettingsButtonClick")
     }
+
+    // On Settings Window Dismiss
+    @SimpleEvent(description = "Event raised when settings window or dialog is dismissed.")
+    fun OnSettingsWindowDismiss(isFullScreen: Boolean) {
+        EventDispatcher.dispatchEvent(this, "OnSettingsWindowDismiss", isFullScreen)
+    }
+
+    @SimpleProperty(description = "Check if player is in fullscreen mode.")
+    fun isFullscreen() = styledPlayerView?.isFullscreen ?: false
 
     // Set Repeat Mode
     @DesignerProperty(
@@ -906,7 +916,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     )
     @SimpleProperty(description = "Set surface type for player.")
     fun SurfaceType(type: String) {
-        Log.v(LOG_TAG,"SurfaceType | type: $type")
+        Log.v(LOG_TAG, "SurfaceType | type: $type")
         surfaceType = getSurfaceType(type)
     }
 
