@@ -10,9 +10,12 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.DefaultControlDispatcher
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.text.Cue
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
+import com.google.android.exoplayer2.trackselection.MappingTrackSelector.MappedTrackInfo
 import com.google.android.exoplayer2.ui.*
 import com.google.appinventor.components.annotations.DesignerProperty
 import com.google.appinventor.components.annotations.SimpleEvent
@@ -35,6 +38,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     private var playerView: PlayerView? = null
     private var styledPlayerView: StyledPlayerView? = null
     private val isDebugMode = form is ReplForm
+    private var exoPlayer: SimpleExoPlayer? = null
 
     private var repeatMode: String = REPEAT_MODE_OFF
     private var bufferingMode: String = SHOW_BUFFERING_WHEN_PLAYING
@@ -147,9 +151,13 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
             }
         }
 
+    private val trackSelector: DefaultTrackSelector?
+    get() = exoPlayer?.trackSelector as? DefaultTrackSelector
+
     // Initialize player view
     private fun initialize(layout: HVArrangement, exoPlayer: SimpleExoPlayer, playerType: PlayerViewType) {
 
+        this.exoPlayer = exoPlayer
         this.playerType = playerType
         val viewGroup: ViewGroup = layout.view as ViewGroup
         if (isDebugMode) Log.v(LOG_TAG, "initialize | Debug mode : true")
@@ -243,6 +251,47 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
         )
     }
 
+    private fun getRenderIndex(type: Int = C.TRACK_TYPE_VIDEO): Int? {
+        val trackInfo = trackSelector?.currentMappedTrackInfo
+        val renderCount = trackInfo?.rendererCount ?: 0
+        for (renderIndex in 0 until renderCount) {
+            val trackType: Int? = trackInfo?.getRendererType(renderIndex)
+            if (trackType == type) return renderIndex
+        }
+        return null
+    }
+
+    /**
+     * Returns whether a track selection dialog will have content to display if initialized with the
+     * specified [DefaultTrackSelector] in its current state.
+     */
+    private fun willHaveContent(trackSelector: DefaultTrackSelector, rendererIndex: Int): Boolean {
+        val mappedTrackInfo = trackSelector.currentMappedTrackInfo
+        return mappedTrackInfo != null && willHaveContent(mappedTrackInfo, rendererIndex)
+    }
+
+    /**
+     * Returns whether a track selection dialog will have content to display if initialized with the
+     * specified [MappedTrackInfo].
+     */
+    private fun willHaveContent(mappedTrackInfo: MappedTrackInfo, rendererIndex: Int): Boolean {
+        return hasTracks(mappedTrackInfo, rendererIndex)
+    }
+
+    private fun hasTracks(mappedTrackInfo: MappedTrackInfo, rendererIndex: Int): Boolean {
+        val trackGroupArray = mappedTrackInfo.getTrackGroups(rendererIndex)
+        if (trackGroupArray.length == 0) {
+            return false
+        }
+        val trackType = mappedTrackInfo.getRendererType(rendererIndex)
+        return isSupportedTrackType(trackType)
+    }
+
+    private fun isSupportedTrackType(trackType: Int): Boolean = when (trackType) {
+        C.TRACK_TYPE_VIDEO, C.TRACK_TYPE_AUDIO, C.TRACK_TYPE_TEXT -> true
+        else -> false
+    }
+
     // Create Player View
     @SimpleFunction(description = "Create player ui.")
     fun CreateSimplePlayer(layout: HVArrangement, exoplayer: Any?) {
@@ -297,10 +346,54 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
         window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_VISIBLE)
     }
 
+    @SimpleFunction(description = "Show a dialog to override track selection.")
+    fun ShowSelectionDialog(
+        title: String,
+        trackType: Int,
+        showDisabledOptions: Boolean,
+        allowAdaptiveSelections: Boolean,
+        allowMultipleOverrides: Boolean
+    ) {
+        if (CanShowDialog(trackType)) {
+            val rendererIndex = getRenderIndex(trackType)
+            val trackNameProvider =
+                if (trackType == C.TRACK_TYPE_VIDEO) TrackNameProvider { format -> "${format.width} x ${format.height}" } else null
+            val dialog = TrackSelectionDialogBuilder(context, title, trackSelector!!, rendererIndex!!)
+                .setShowDisableOption(showDisabledOptions)
+                .setAllowAdaptiveSelections(allowAdaptiveSelections)
+                .setAllowMultipleOverrides(allowMultipleOverrides)
+                .setTrackNameProvider(trackNameProvider)
+                .build()
+            dialog.apply {
+                setOnDismissListener { OnSettingsWindowDismiss(isFullscreen()) }
+                show()
+            }
+        }
+    }
+
+    @SimpleFunction(description = "Check whether you can show a track selection dialog for given track type.")
+    fun CanShowDialog(trackType: Int): Boolean {
+        val rendererIndex = getRenderIndex(trackType)
+        return if (rendererIndex != null && trackSelector != null) willHaveContent(
+            trackSelector!!,
+            rendererIndex
+        ) else false
+    }
+
+    @SimpleProperty
+    fun TrackTypeVideo() = C.TRACK_TYPE_VIDEO
+
+    @SimpleProperty
+    fun TrackTypeAudio() = C.TRACK_TYPE_AUDIO
+
+    @SimpleProperty
+    fun TrackTypeText() = C.TRACK_TYPE_TEXT
+
     // Reassign Exoplayer Instance (Trying to fix player not working after screen off)
     @SimpleProperty(description = "Assign Exoplayer Instance")
     fun Player(exoplayer: Any?) {
         if (exoplayer != null && exoplayer is SimpleExoPlayer) {
+            this.exoPlayer = exoplayer
             if (playerType == PlayerViewType.SimplePlayerView)
                 playerView?.player = exoplayer
             else if (playerType == PlayerViewType.StyledPlayerView)

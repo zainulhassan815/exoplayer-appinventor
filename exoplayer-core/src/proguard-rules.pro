@@ -26,7 +26,25 @@
 -keep class com.google.android.exoplayer2.ui** {
     *;
 }
-
+# In order to add track selection in ExoplayerUI,
+# we need to keep these classes and some fields as
+# they are used by the track selection dialog.
+-keepclasseswithmembers class com.google.android.exoplayer2.SimpleExoPlayer {
+    public com.google.android.exoplayer2.trackselection.TrackSelector getTrackSelector();
+}
+-keepclasseswithmembers class com.google.android.exoplayer2.trackselection.DefaultTrackSelector {
+    *;
+}
+-keepclasseswithmembers class com.google.android.exoplayer2.trackselection.MappingTrackSelector$MappedTrackInfo {
+    *;
+}
+-keepclasseswithmembers class com.google.android.exoplayer2.source.TrackGroupArray {
+    public final int length;
+}
+-keepclasseswithmembers class com.google.android.exoplayer2.Format {
+    public final int width;
+    public final int height;
+}
 # Proguard rules specific to the common module.
 ###############################################
 
