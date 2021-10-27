@@ -1,6 +1,8 @@
 package com.dreamers.exoplayercore
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.media.AudioManager
 import android.net.Uri
 import android.util.Log
 import com.google.android.exoplayer2.*
@@ -27,6 +29,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     private val context: Context = container.`$context`()
     private var exoplayer: SimpleExoPlayer? = null
     private var trackSelector: DefaultTrackSelector? = null
+    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
     init {
         // Need to register extension for activity changes
@@ -83,12 +86,12 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         if (exoplayer == null && isPlayerInitialized) {
             setupPlayer()
             // Call app resume here
-            Log.v(LOG_TAG,"OnAppResume")
+            Log.v(LOG_TAG, "OnAppResume")
             OnAppResume()
         }
     }
 
-    // Release player from memory
+    /** Release player from memory. It is necessary to release the resources when player is no longer visible. */
     private fun releasePlayer() {
         exoplayer?.run {
             playbackPosition = this.currentPosition
@@ -102,6 +105,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         Log.v(LOG_TAG, "releasePlayer : Released = ${exoplayer == null}")
     }
 
+    /** Convert `MediaMetadata` to `YailDictionary` so it can be used easily in blocks. */
     private fun MediaMetadata.toJson(): YailDictionary {
         val data = JSONObject().also { obj ->
             obj.put("title", this.title.toString())
@@ -121,6 +125,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         return JsonUtil.getDictionaryFromJsonObject(data)
     }
 
+    /** Returns `String` if it is present in JSONObject else `null`. */
     private fun JSONObject.getStringOrNull(key: String): String? {
         return try {
             getString(key)
@@ -129,6 +134,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         }
     }
 
+    /** Returns `Integer` if it is present in JSONObject else `null`. */
     private fun JSONObject.getIntOrNull(key: String): Int? {
         return try {
             getInt(key)
@@ -137,6 +143,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         }
     }
 
+    /** Converts JSON String into `MediaItem.Subtitle`. */
     private fun parseSubtitleData(data: String): MediaItem.Subtitle? {
         try {
             val jsonObject = JSONObject(data)
@@ -147,13 +154,13 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
             val selectionFlags = jsonObject.getIntOrNull("selection_flags") ?: 0
             return MediaItem.Subtitle(Uri.parse(uri), mimeType, language, selectionFlags, 0, label)
         } catch (e: JSONException) {
-            Log.e(LOG_TAG, "parseSubtitleData | Failed to parse data : $data with error : $e")
-            OnError("Failed to parse data : $data with error : $e")
+            Log.e(LOG_TAG, "parseSubtitleData | Failed to parse data : $data with error : ${e.message}")
+            OnError("Failed to parse data : $data with error : ${e.message}")
         }
         return null
     }
 
-    // Do basic setup for player
+    /** Initialize player. Here all the necessary setup should be done. */
     private fun setupPlayer() {
         Log.v(LOG_TAG, "Setting up player")
         trackSelector = DefaultTrackSelector(context)
@@ -166,6 +173,9 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
                 exoplayer.playWhenReady = shouldPlayWhenReady
                 exoplayer.prepare()
 
+                /** If the player is created again when app is resumed,
+                 *  we need to make sure that we use previously added media items
+                 *  rather than initializing player with empty list. */
                 if (mediaItems.isNotEmpty()) {
                     Log.v(LOG_TAG, "setupPlayer : Using previously added media items.")
                     exoplayer.addMediaItems(mediaItems)
@@ -187,10 +197,10 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         OnStateChanged(state)
     }
 
-    override fun onPlayerError(error: ExoPlaybackException) {
-        super.onPlayerError(error)
-        Log.e(LOG_TAG, "onPlayerError : $error")
-        OnError(error.toString())
+    override fun onPlayerError(e: ExoPlaybackException) {
+        super.onPlayerError(e)
+        Log.e(LOG_TAG, "onPlayerError : ${e.message}")
+        OnError(e.toString())
     }
 
     override fun onIsLoadingChanged(isLoading: Boolean) {
@@ -256,7 +266,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         OnMediaItemTransition(mediaItem?.mediaId.toString(), reason)
     }
 
-    // Get exoplayer instance
+    /** Get exoplayer instance */
     @SimpleFunction(description = "Get Exoplayer instance to use in exoplayer ui")
     fun Player(): Any? = exoplayer
 
@@ -266,51 +276,51 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         setupPlayer()
     }
 
-    // Play Video
+    /** Play Video */
     @SimpleFunction(description = "Play media")
     fun Play() {
         exoplayer?.play()
     }
 
-    // Pause Video
+    /** Pause Video */
     @SimpleFunction(description = "Pause media")
     fun Pause() {
         exoplayer?.pause()
     }
 
-    // Stop video
+    /** Stop video */
     @SimpleFunction(description = "Stop media.")
     fun Stop() {
         exoplayer?.stop()
     }
 
-    // Seek to
+    /** Seek to */
     @SimpleFunction(description = "Seek media to given position.")
     fun SeekTo(position: Long) {
         exoplayer?.seekTo(position)
     }
 
-    // Play when ready
+    /** Play when ready */
     @SimpleProperty(description = "Should play automatically when ready")
     fun PlayWhenReady(play: Boolean) {
         exoplayer?.playWhenReady = play
         shouldPlayWhenReady = play
     }
 
-    // Clear Media Items
+    /** Clear Media Items */
     @SimpleFunction(description = "Clear media items")
     fun ClearMediaItems() {
         exoplayer?.clearMediaItems()
         mediaItems.clear()
     }
 
-    // Set Repeat Modes
+    /** Set Repeat Modes */
     @SimpleProperty(description = "Set playback repeat modes")
     fun RepeatModes(modes: Int) {
         exoplayer?.repeatMode = modes
     }
 
-    // Add Media Item
+    /** Add Media Item */
     @SimpleFunction(description = "Add a new media item")
     fun AddMedia(path: String, subtitles: YailList) {
         try {
@@ -329,19 +339,19 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
                 exoplayer?.addMediaItem(mediaItem)
             } else throw Exception("Path is null or empty")
         } catch (e: Exception) {
-            Log.e(LOG_TAG, "AddMedia : Error = $e")
-            OnError("AddMedia : Error = $e")
+            Log.e(LOG_TAG, "AddMedia : Error = ${e.message}")
+            OnError("AddMedia : Error = ${e.message}")
         }
     }
 
-    // Remove Media Item at index
+    /** Remove Media Item at index */
     @SimpleFunction(description = "Remove media item at a specific index")
     fun RemoveMedia(index: Int) {
         exoplayer?.removeMediaItem(index)
         mediaItems.removeAt(index)
     }
 
-    // Format milliseconds to time
+    /** Format milliseconds to time */
     @SimpleFunction(description = "Convert milliseconds to hh:mm:ss time format")
     fun Format(mills: Int): String {
         val seconds: Long = mills.div(1000L)
@@ -353,6 +363,25 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
             seconds % 60L,
         )
     }
+
+    @SimpleFunction(description = "Increment device volume.")
+    fun IncreaseVolume() {
+        exoplayer?.increaseDeviceVolume()
+    }
+
+    @SimpleFunction(description = "Decrease device volume.")
+    fun DecreaseVolume() {
+        exoplayer?.decreaseDeviceVolume()
+    }
+
+    @SimpleProperty
+    fun TrackTypeVideo() = C.TRACK_TYPE_VIDEO
+
+    @SimpleProperty
+    fun TrackTypeAudio() = C.TRACK_TYPE_AUDIO
+
+    @SimpleProperty
+    fun TrackTypeText() = C.TRACK_TYPE_TEXT
 
     @SimpleProperty(description = "Check if video is playing or not.")
     fun IsPlaying() = exoplayer?.isPlaying ?: false
@@ -374,6 +403,30 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
 
     @SimpleProperty(description = "Get the current playback state of exoplayer")
     fun PlaybackState() = exoplayer?.playbackState ?: 0
+
+    @SimpleProperty(description = "Get current device volume")
+    fun DeviceVolume(): Int = exoplayer?.deviceVolume ?: 0
+
+    @SimpleProperty(description = "Set current device volume")
+    fun DeviceVolume(volume: Int) {
+        exoplayer?.deviceVolume = volume
+    }
+
+    @SimpleProperty(description = "Check if device is muted or not")
+    fun DeviceMuted(): Boolean = exoplayer?.isDeviceMuted ?: false
+
+    @SimpleProperty(description = "Toggle device muted state")
+    fun DeviceMuted(muted: Boolean) {
+        exoplayer?.isDeviceMuted = muted
+    }
+
+    @SuppressLint("NewApi")
+    @SimpleProperty(description = "Minimum device volume")
+    fun MinVolume() = audioManager.getStreamMinVolume(AudioManager.STREAM_MUSIC)
+
+    @SuppressLint("NewApi")
+    @SimpleProperty(description = "Maximum device volume")
+    fun MaxVolume() = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
 
     // Events
     // =============================
