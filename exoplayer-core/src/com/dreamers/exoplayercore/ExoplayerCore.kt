@@ -374,15 +374,6 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         exoplayer?.decreaseDeviceVolume()
     }
 
-    @SimpleProperty
-    fun TrackTypeVideo() = C.TRACK_TYPE_VIDEO
-
-    @SimpleProperty
-    fun TrackTypeAudio() = C.TRACK_TYPE_AUDIO
-
-    @SimpleProperty
-    fun TrackTypeText() = C.TRACK_TYPE_TEXT
-
     @SimpleProperty(description = "Check if video is playing or not.")
     fun IsPlaying() = exoplayer?.isPlaying ?: false
 
