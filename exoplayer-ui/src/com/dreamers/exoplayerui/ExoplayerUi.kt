@@ -350,7 +350,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     fun ShowSelectionDialog(
         title: String,
         trackType: Int,
-        showDisabledOptions: Boolean,
+        showDisableOption: Boolean,
         allowAdaptiveSelections: Boolean,
         allowMultipleOverrides: Boolean
     ) {
@@ -359,7 +359,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
             val trackNameProvider =
                 if (trackType == C.TRACK_TYPE_VIDEO) TrackNameProvider { format -> "${format.width} x ${format.height}" } else null
             val dialog = TrackSelectionDialogBuilder(context, title, trackSelector!!, rendererIndex!!)
-                .setShowDisableOption(showDisabledOptions)
+                .setShowDisableOption(showDisableOption)
                 .setAllowAdaptiveSelections(allowAdaptiveSelections)
                 .setAllowMultipleOverrides(allowMultipleOverrides)
                 .setTrackNameProvider(trackNameProvider)
