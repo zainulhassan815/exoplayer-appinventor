@@ -344,6 +344,107 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         }
     }
 
+    /**
+     * Add a new media item with extra customizations.
+     */
+    @SimpleFunction(description = "Add a new media item with extra customizations.")
+    fun AddMediaExtended(
+        path: String,
+        subtitles: YailList,
+        mediaId: String,
+        mimeType: String,
+        startPositionMs: Long,
+        endPositionMs: Long,
+        relativeToLiveWindow: Boolean,
+        relativeToDefaultPosition: Boolean,
+        startsAtKeyFrame: Boolean,
+        drmScheme: String,
+        drmLicenseUri: String,
+        drmForceDefaultLicenseUri: Boolean,
+        drmLicenseRequestHeaders: YailDictionary,
+        drmMultiSession: Boolean,
+        drmPlayClearContentWithoutKey: Boolean,
+        drmSessionForClearContent: Boolean,
+        liveTargetOffsetMs: Long,
+        liveMinOffsetMs: Long,
+        liveMaxOffsetMs: Long,
+        liveMinPlaybackSpeed: Float,
+        liveMaxPlaybackSpeed: Float
+    ) {
+        try {
+            if (path.isNotEmpty()) {
+                val builder = MediaItem.Builder().setUri(path)
+                val subtitleArray: ArrayList<MediaItem.Subtitle> = arrayListOf()
+
+                subtitles.toStringArray().forEach { subtitleData ->
+                    val subtitle = parseSubtitleData(subtitleData)
+                    subtitle?.let { subtitleArray.add(subtitle) }
+                }
+
+                builder.apply {
+                    if (mediaId.isNotEmpty()) setMediaId(mediaId) else setMediaId(path)
+                    if (mimeType.isNotEmpty()) setMimeType(mimeType)
+                    setSubtitles(subtitleArray)
+
+                    // Clipping properties
+                    setClipStartPositionMs(startPositionMs)
+                    setClipEndPositionMs(endPositionMs)
+                    setClipRelativeToLiveWindow(relativeToLiveWindow)
+                    setClipRelativeToDefaultPosition(relativeToDefaultPosition)
+                    setClipStartsAtKeyFrame(startsAtKeyFrame)
+
+                    // Drm properties
+                    if (drmScheme.isNotEmpty()) {
+                        val drmUUID = Util.getDrmUuid(drmScheme)
+                        if (drmUUID != null) {
+                            setDrmUuid(drmUUID)
+                            if (drmLicenseUri.isNotEmpty()) setDrmLicenseUri(drmLicenseUri)
+                            setDrmForceDefaultLicenseUri(drmForceDefaultLicenseUri)
+
+                            val headers: MutableMap<String, String> = mutableMapOf()
+                            drmLicenseRequestHeaders.iterator()
+                                .forEach { pair -> headers[pair.getString(0)] = pair.getString(1) }
+                            setDrmLicenseRequestHeaders(headers)
+
+                            setDrmMultiSession(drmMultiSession)
+                            setDrmPlayClearContentWithoutKey(drmPlayClearContentWithoutKey)
+                            if (drmSessionForClearContent) setDrmSessionForClearTypes(
+                                listOf(
+                                    C.TRACK_TYPE_VIDEO,
+                                    C.TRACK_TYPE_AUDIO
+                                )
+                            )
+                        }
+                    }
+
+                    // Live properties
+                    setLiveTargetOffsetMs(liveTargetOffsetMs)
+                    setLiveMinOffsetMs(liveMinOffsetMs)
+                    setLiveMaxOffsetMs(liveMaxOffsetMs)
+                    setLiveMinPlaybackSpeed(liveMinPlaybackSpeed)
+                    setLiveMaxPlaybackSpeed(liveMaxPlaybackSpeed)
+                }
+
+                val mediaItem = builder.build()
+                mediaItems.add(mediaItem)
+                exoplayer?.addMediaItem(mediaItem)
+
+            } else throw Exception("Path is null or empty")
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "AddMedia : Error = ${e.message}")
+            OnError("AddMedia : Error = ${e.message}")
+        }
+    }
+
+    @SimpleProperty
+    fun RateUnset() = C.RATE_UNSET
+
+    @SimpleProperty
+    fun TimeUnset() = C.TIME_UNSET
+
+    @SimpleProperty
+    fun TimeEndOfSource() = C.TIME_END_OF_SOURCE
+
     /** Remove Media Item at index */
     @SimpleFunction(description = "Remove media item at a specific index")
     fun RemoveMedia(index: Int) {
