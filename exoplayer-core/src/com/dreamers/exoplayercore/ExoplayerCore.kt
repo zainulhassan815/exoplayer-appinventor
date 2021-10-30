@@ -7,7 +7,10 @@ import android.net.Uri
 import android.util.Log
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.source.MediaSource
+import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.util.EventLogger
 import com.google.android.exoplayer2.util.Util
 import com.google.android.exoplayer2.video.VideoSize
@@ -45,7 +48,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     private var shouldPlayWhenReady = false
 
     private var isPlayerInitialized = false
-    private val mediaItems: ArrayList<MediaItem> = arrayListOf()
+    private val mediaItems: ArrayList<Any> = arrayListOf()
 
 
     companion object {
@@ -178,7 +181,13 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
                  *  rather than initializing player with empty list. */
                 if (mediaItems.isNotEmpty()) {
                     Log.v(LOG_TAG, "setupPlayer : Using previously added media items.")
-                    exoplayer.addMediaItems(mediaItems)
+                    mediaItems.forEach { item ->
+                        if (item is MediaItem) {
+                            exoplayer.addMediaItem(item)
+                        } else if (item is MediaSource) {
+                            exoplayer.addMediaSource(item)
+                        }
+                    }
                 }
 
                 // Add Listeners to player
@@ -321,6 +330,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     }
 
     /** Add Media Item */
+    @Deprecated("Use AddMediaItem with CreateMedia & CreateMediaExtended instead. This method will be removed in the newer version.")
     @SimpleFunction(description = "Add a new media item")
     fun AddMedia(path: String, subtitles: YailList) {
         try {
@@ -433,6 +443,220 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         } catch (e: Exception) {
             Log.e(LOG_TAG, "AddMedia : Error = ${e.message}")
             OnError("AddMedia : Error = ${e.message}")
+        }
+    }
+
+    /**
+     * Create a basic media item
+     *
+     * @param path Path to media file either offline or online.
+     * @param subtitles List of Subtitles.
+     *
+     * @return MediaItem or null if media item is not created successfully
+     */
+    @SimpleFunction(description = "Create new media item")
+    fun CreateMedia(path: String, subtitles: YailList): Any? {
+        try {
+            if (path.isNotEmpty()) {
+                val builder = MediaItem.Builder().setUri(path)
+                val subtitleArray: ArrayList<MediaItem.Subtitle> = arrayListOf()
+
+                subtitles.toStringArray().forEach { subtitleData ->
+                    val subtitle = parseSubtitleData(subtitleData)
+                    subtitle?.let { subtitleArray.add(subtitle) }
+                }
+                builder.setSubtitles(subtitleArray)
+                builder.setMediaId(path)
+                return builder.build()
+            } else throw Exception("Path is null or empty")
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "AddMedia : Error = ${e.message}")
+            OnError("AddMedia : Error = ${e.message}")
+            return null
+        }
+    }
+
+    /**
+     * Create new media item with extra customizations.
+     *
+     * @param path Path to media file either offline or online.
+     * @param subtitles List of Subtitles.
+     * @param mediaId Custom media id or an empty string to use path as default id.
+     * @param mimeType The MIME type may be used as a hint for inferring the type of the media item.
+     * @param startPositionMs Sets the optional start position in milliseconds which must be a value larger than or equal to zero.
+     * @param endPositionMs Sets the optional end position in milliseconds which must be a value larger than or equal to zero, or TimeEndOfSource.
+     * @param relativeToLiveWindow Sets whether the start/end positions should move with the live window for live streams.
+     * @param relativeToDefaultPosition Sets whether the start position and the end position are relative to the default position in the window.
+     * @param startsAtKeyFrame Sets whether the start point is guaranteed to be a key frame.
+     * @param drmScheme The drm scheme that will be used to get respective drm UUID.
+     * @param drmLicenseUri Sets the optional default DRM license server URI.
+     * @param drmForceDefaultLicenseUri Sets whether to force use the default DRM license server URI even if the media specifies its own DRM license server URI.
+     * @param drmLicenseRequestHeaders Sets the optional request headers attached to the DRM license request.
+     * @param drmMultiSession Sets whether the DRM configuration is multi session enabled.
+     * @param drmPlayClearContentWithoutKey Sets whether clear samples within protected content should be played when keys for the encrypted part of the content have yet to be loaded.
+     * @param drmSessionForClearContent Sets whether a DRM session should be used for clear tracks of type TrackTypeVideo and TrackTypeAudio.
+     * @param liveTargetOffsetMs Sets the optional target offset from the live edge for live streams, in milliseconds.
+     * @param liveMinOffsetMs Sets the optional minimum offset from the live edge for live streams, in milliseconds.
+     * @param liveMaxOffsetMs Sets the optional maximum offset from the live edge for live streams, in milliseconds.
+     * @param liveMinPlaybackSpeed Sets the optional minimum playback speed for live stream speed adjustment.
+     * @param liveMaxPlaybackSpeed Sets the optional maximum playback speed for live stream speed adjustment.
+     *
+     * @return MediaItem or null if media item is not created successfully
+     */
+    @SimpleFunction(description = "Create new media item with extra customizations.")
+    fun CreateMediaExtended(
+        path: String,
+        subtitles: YailList,
+        mediaId: String,
+        mimeType: String,
+        startPositionMs: Long,
+        endPositionMs: Long,
+        relativeToLiveWindow: Boolean,
+        relativeToDefaultPosition: Boolean,
+        startsAtKeyFrame: Boolean,
+        drmScheme: String,
+        drmLicenseUri: String,
+        drmForceDefaultLicenseUri: Boolean,
+        drmLicenseRequestHeaders: YailDictionary,
+        drmMultiSession: Boolean,
+        drmPlayClearContentWithoutKey: Boolean,
+        drmSessionForClearContent: Boolean,
+        liveTargetOffsetMs: Long,
+        liveMinOffsetMs: Long,
+        liveMaxOffsetMs: Long,
+        liveMinPlaybackSpeed: Float,
+        liveMaxPlaybackSpeed: Float
+    ): Any? {
+        try {
+            if (path.isNotEmpty()) {
+                val builder = MediaItem.Builder().setUri(path)
+                val subtitleArray: ArrayList<MediaItem.Subtitle> = arrayListOf()
+
+                subtitles.toStringArray().forEach { subtitleData ->
+                    val subtitle = parseSubtitleData(subtitleData)
+                    subtitle?.let { subtitleArray.add(subtitle) }
+                }
+
+                builder.apply {
+                    if (mediaId.isNotEmpty()) setMediaId(mediaId) else setMediaId(path)
+                    if (mimeType.isNotEmpty()) setMimeType(mimeType)
+                    setSubtitles(subtitleArray)
+
+                    // Clipping properties
+                    setClipStartPositionMs(startPositionMs)
+                    setClipEndPositionMs(endPositionMs)
+                    setClipRelativeToLiveWindow(relativeToLiveWindow)
+                    setClipRelativeToDefaultPosition(relativeToDefaultPosition)
+                    setClipStartsAtKeyFrame(startsAtKeyFrame)
+
+                    // Drm properties
+                    if (drmScheme.isNotEmpty()) {
+                        val drmUUID = Util.getDrmUuid(drmScheme)
+                        if (drmUUID != null) {
+                            setDrmUuid(drmUUID)
+                            if (drmLicenseUri.isNotEmpty()) setDrmLicenseUri(drmLicenseUri)
+                            setDrmForceDefaultLicenseUri(drmForceDefaultLicenseUri)
+
+                            val headers: MutableMap<String, String> = mutableMapOf()
+                            drmLicenseRequestHeaders.iterator()
+                                .forEach { pair -> headers[pair.getString(0)] = pair.getString(1) }
+                            setDrmLicenseRequestHeaders(headers)
+
+                            setDrmMultiSession(drmMultiSession)
+                            setDrmPlayClearContentWithoutKey(drmPlayClearContentWithoutKey)
+                            if (drmSessionForClearContent) setDrmSessionForClearTypes(
+                                listOf(
+                                    C.TRACK_TYPE_VIDEO,
+                                    C.TRACK_TYPE_AUDIO
+                                )
+                            )
+                        }
+                    }
+
+                    // Live properties
+                    setLiveTargetOffsetMs(liveTargetOffsetMs)
+                    setLiveMinOffsetMs(liveMinOffsetMs)
+                    setLiveMaxOffsetMs(liveMaxOffsetMs)
+                    setLiveMinPlaybackSpeed(liveMinPlaybackSpeed)
+                    setLiveMaxPlaybackSpeed(liveMaxPlaybackSpeed)
+                }
+
+                return builder.build()
+
+            } else throw Exception("Path is null or empty")
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "AddMedia : Error = ${e.message}")
+            OnError("AddMedia : Error = ${e.message}")
+            return null
+        }
+    }
+
+    /**
+     * Create HLS media source with given media item.
+     *
+     * @param mediaItem MediaItem
+     * @param userAgent The user agent that will be used, or empty string to use the default user agent of the underlying platform.
+     * @param requestHeaders Http Request Headers.
+     * @param allowCrossProtocolRedirects Whether to allow cross protocol redirects (i.e. redirects from HTTP to HTTPS or vice versa).
+     * @param allowChunklessPreparation Sets whether chunkless preparation is allowed. If true, preparation without chunk downloads will be enabled for streams that provide sufficient information in their master playlist.
+     *
+     * @return HlsMediaSource or null if given media item is not valid.
+     */
+    @SimpleFunction(description = "Create HLS media source with given media item.")
+    fun HlsSource(
+        mediaItem: Any?,
+        userAgent: String,
+        requestHeaders: YailDictionary,
+        allowCrossProtocolRedirects: Boolean,
+        allowChunklessPreparation: Boolean,
+    ): Any? {
+        if (mediaItem != null && mediaItem is MediaItem) {
+            // Create http data source
+            val dataSourceFactory = DefaultHttpDataSource.Factory().apply {
+                if (userAgent.isNotEmpty()) setUserAgent(userAgent)
+
+                val headers: MutableMap<String, String> = mutableMapOf()
+                requestHeaders.iterator()
+                    .forEach { pair -> headers[pair.getString(0)] = pair.getString(1) }
+                setDefaultRequestProperties(headers)
+
+                setAllowCrossProtocolRedirects(allowCrossProtocolRedirects)
+            }
+
+            // return HlsMediaSource
+            return HlsMediaSource.Factory(dataSourceFactory)
+                .setAllowChunklessPreparation(allowChunklessPreparation)
+                .createMediaSource(mediaItem)
+        }
+        return null
+    }
+
+    /**
+     * Add a new media source
+     *
+     * @param source Media source that will be added to the player.
+     * @see HlsSource
+     */
+    @SimpleFunction(description = "Add a new media source.")
+    fun AddMediaSource(source: Any?) {
+        if (source != null && source is MediaSource) {
+            mediaItems.add(source)
+            exoplayer?.addMediaSource(source)
+        }
+    }
+
+    /**
+     * Add a new media item to the player.
+     *
+     * @param mediaItem MediaItem object that will be added to the player
+     * @see CreateMedia
+     * @see CreateMediaExtended
+     */
+    @SimpleFunction(description = "Add media item")
+    fun AddMediaItem(mediaItem: Any?) {
+        if (mediaItem != null && mediaItem is MediaItem) {
+            mediaItems.add(mediaItem)
+            exoplayer?.addMediaItem(mediaItem)
         }
     }
 
