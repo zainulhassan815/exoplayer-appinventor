@@ -8,6 +8,7 @@ import android.util.Log
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.source.MediaSource
+import com.google.android.exoplayer2.source.dash.DashMediaSource
 import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
@@ -535,6 +536,41 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
             return HlsMediaSource.Factory(dataSourceFactory)
                 .setAllowChunklessPreparation(allowChunklessPreparation)
                 .createMediaSource(mediaItem)
+        }
+        return null
+    }
+
+    /**
+     * Create Dash media source with given media item.
+     *
+     * @param mediaItem MediaItem
+     * @param userAgent The user agent that will be used, or empty string to use the default user agent of the underlying platform.
+     * @param requestHeaders Http Request Headers.
+     * @param allowCrossProtocolRedirects Whether to allow cross protocol redirects (i.e. redirects from HTTP to HTTPS or vice versa).
+     *
+     * @return DashMediaSource or null if given media item is not valid.
+     */
+    @SimpleFunction(description = "Create Dash media source with given media item.")
+    fun DashSource(
+        mediaItem: Any?,
+        userAgent: String,
+        requestHeaders: YailDictionary,
+        allowCrossProtocolRedirects: Boolean,
+    ): Any? {
+        if (mediaItem != null && mediaItem is MediaItem) {
+            // Create http data source
+            val dataSourceFactory = DefaultHttpDataSource.Factory().apply {
+                if (userAgent.isNotEmpty()) setUserAgent(userAgent)
+
+                val headers: MutableMap<String, String> = mutableMapOf()
+                requestHeaders.iterator()
+                    .forEach { pair -> headers[pair.getString(0)] = pair.getString(1) }
+                setDefaultRequestProperties(headers)
+
+                setAllowCrossProtocolRedirects(allowCrossProtocolRedirects)
+            }
+
+            return DashMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem)
         }
         return null
     }
