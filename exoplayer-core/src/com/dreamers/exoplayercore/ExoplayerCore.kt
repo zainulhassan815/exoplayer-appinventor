@@ -10,6 +10,8 @@ import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.dash.DashMediaSource
 import com.google.android.exoplayer2.source.hls.HlsMediaSource
+import com.google.android.exoplayer2.source.hls.playlist.HlsPlaylistParser
+import com.google.android.exoplayer2.text.Cue
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.util.EventLogger
@@ -274,6 +276,13 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
             "onMediaItemTransition : MediaUrl = ${mediaItem?.mediaId.toString()} | Reason = $reason"
         )
         OnMediaItemTransition(mediaItem?.mediaId.toString(), reason)
+    }
+
+    override fun onCues(cues: MutableList<Cue>) {
+        super.onCues(cues)
+        val text = cues.map { cue -> cue.text }
+        val yailList = YailList.makeList(text)
+        OnCues(yailList)
     }
 
     /** Get exoplayer instance */
@@ -748,6 +757,11 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     @SimpleEvent(description = "Event raised when current media item transitions.")
     fun OnMediaItemTransition(mediaUrl: String, reason: Int) {
         EventDispatcher.dispatchEvent(this, "OnMediaItemTransition", mediaUrl, reason)
+    }
+
+    @SimpleEvent(description = "Event raised when text output changes.")
+    fun OnCues(cues: YailList) {
+        EventDispatcher.dispatchEvent(this,"OnCues",cues)
     }
 
     // Property Getters
