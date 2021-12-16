@@ -1,5 +1,6 @@
 package com.dreamers.exoplayerui
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.graphics.Color
@@ -24,6 +25,7 @@ import com.google.appinventor.components.annotations.SimpleProperty
 import com.google.appinventor.components.common.PropertyTypeConstants
 import com.google.appinventor.components.runtime.*
 
+@SuppressLint("NewApi")
 @Suppress("FunctionName")
 class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(container.`$form`()), Component,
     OnPauseListener, OnResumeListener {

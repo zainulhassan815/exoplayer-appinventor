@@ -10,16 +10,17 @@ import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.dash.DashMediaSource
 import com.google.android.exoplayer2.source.hls.HlsMediaSource
-import com.google.android.exoplayer2.source.hls.playlist.HlsPlaylistParser
 import com.google.android.exoplayer2.text.Cue
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.util.EventLogger
 import com.google.android.exoplayer2.util.Util
 import com.google.android.exoplayer2.video.VideoSize
+import com.google.appinventor.components.annotations.DesignerProperty
 import com.google.appinventor.components.annotations.SimpleEvent
 import com.google.appinventor.components.annotations.SimpleFunction
 import com.google.appinventor.components.annotations.SimpleProperty
+import com.google.appinventor.components.common.PropertyTypeConstants
 import com.google.appinventor.components.runtime.*
 import com.google.appinventor.components.runtime.util.JsonUtil
 import com.google.appinventor.components.runtime.util.YailDictionary
@@ -52,6 +53,8 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
 
     private var isPlayerInitialized = false
     private val mediaItems: ArrayList<Any> = arrayListOf()
+
+    private var playbackSpeed: Float = 1f
 
 
     companion object {
@@ -178,6 +181,9 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
                 exoplayer.seekTo(currentWindow, playbackPosition)
                 exoplayer.playWhenReady = shouldPlayWhenReady
                 exoplayer.prepare()
+
+                // Set playback speed
+                exoplayer.setPlaybackSpeed(playbackSpeed)
 
                 /** If the player is created again when app is resumed,
                  *  we need to make sure that we use previously added media items
@@ -313,10 +319,44 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         exoplayer?.stop()
     }
 
+    @SimpleFunction(description = "Play next media item in the playlist.")
+    fun Next() {
+        exoplayer?.next()
+    }
+
+    @SimpleFunction(description = "Play previous media item in the playlist.")
+    fun Previous() {
+        exoplayer?.previous()
+    }
+
+    @SimpleProperty(description = "Check if playlist has next media item.")
+    fun HasNext(): Boolean = exoplayer?.hasNext() ?: false
+
+    @SimpleProperty(description = "Check if playlist has previous media item.")
+    fun HasPrevious(): Boolean = exoplayer?.hasPrevious() ?: false
+
+    @SimpleProperty(description = "Get current windows index. Returns `-1` if player is not initialized.")
+    fun CurrentWindowIndex(): Int = if (exoplayer?.currentWindowIndex != null) exoplayer?.currentWindowIndex!! + 1 else -1
+
     /** Seek to */
     @SimpleFunction(description = "Seek media to given position.")
     fun SeekTo(position: Long) {
         exoplayer?.seekTo(position)
+    }
+
+    @SimpleFunction(description = "Seek to media item at given position.")
+    fun SeekToWindow(position: Int) {
+        exoplayer?.seekToDefaultPosition(position)
+    }
+
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_FLOAT,
+        defaultValue = "1"
+    )
+    @SimpleProperty(description = "Set playback speed.")
+    fun PlaybackSpeed(speed: Float) {
+        playbackSpeed = speed
+        exoplayer?.setPlaybackSpeed(speed)
     }
 
     /** Play when ready */
@@ -392,6 +432,19 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
             OnError("AddMedia : Error = ${e.message}")
             return null
         }
+    }
+
+    @SimpleFunction(description = "Creates a Subtitle Object.")
+    fun SubtitleTrack(path: String, mimeType: String,label: String, language: String, flags: Int): String {
+        return """
+            {
+                path: $path,
+                mime_type: $mimeType,
+                selection_flags: $flags,
+                ${if(label.isNotEmpty()) "label: $label," else ""}
+                ${if(language.isNotEmpty()) "language: $language" else ""}
+            }
+        """.trimIndent()
     }
 
     /**
@@ -761,7 +814,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
 
     @SimpleEvent(description = "Event raised when text output changes.")
     fun OnCues(cues: YailList) {
-        EventDispatcher.dispatchEvent(this,"OnCues",cues)
+        EventDispatcher.dispatchEvent(this, "OnCues", cues)
     }
 
     // Property Getters
