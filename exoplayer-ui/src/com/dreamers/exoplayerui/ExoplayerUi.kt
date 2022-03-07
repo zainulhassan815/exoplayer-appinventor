@@ -332,6 +332,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     fun HideSystemUI() {
         val window = (context as Activity).window
         window.decorView.fitsSystemWindows = true
+        @Suppress("Deprecation")
         window.decorView.systemUiVisibility = (
                 View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                         // Hide the nav bar and status bar
@@ -345,6 +346,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     @SimpleFunction(description = "Show System UI. Use with caution. Still in testing.")
     fun ShowSystemUI() {
         val window = (context as Activity).window
+        @Suppress("Deprecation")
         window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_VISIBLE)
     }
 

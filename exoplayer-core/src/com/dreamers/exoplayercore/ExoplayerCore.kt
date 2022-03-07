@@ -90,7 +90,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         releasePlayer()
     }
 
-    // Check if should resume player.
+    // Check if you should resume player.
     private fun resumePlayer() {
         if (exoplayer == null && isPlayerInitialized) {
             setupPlayer()
@@ -116,20 +116,20 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
 
     /** Convert `MediaMetadata` to `YailDictionary` so it can be used easily in blocks. */
     private fun MediaMetadata.toJson(): YailDictionary {
-        val data = JSONObject().also { obj ->
-            obj.put("title", this.title.toString())
-            obj.put("artist", this.artist.toString())
-            obj.put("albumTitle", this.albumTitle.toString())
-            obj.put("albumArtist", this.albumArtist.toString())
-            obj.put("displayTitle", this.displayTitle.toString())
-            obj.put("subtitle", this.subtitle.toString())
-            obj.put("description", this.description.toString())
-            obj.put("media_uri", this.mediaUri.toString())
-            obj.put("artwork_uri", this.artworkUri.toString())
-            obj.put("track_number", this.trackNumber)
-            obj.put("total_tracks", this.totalTrackCount)
-            obj.put("year", this.year)
-            obj.put("playable", this.isPlayable)
+        val data = JSONObject().apply {
+            put("title", title)
+            put("artist", artist)
+            put("albumTitle", albumTitle)
+            put("albumArtist", albumArtist)
+            put("displayTitle", displayTitle)
+            put("subtitle", subtitle)
+            put("description", description)
+            put("media_uri", mediaUri)
+            put("artwork_uri", artworkUri)
+            put("track_number", trackNumber)
+            put("total_tracks", totalTrackCount)
+            put("year", year)
+            put("playable", isPlayable)
         }
         return JsonUtil.getDictionaryFromJsonObject(data)
     }
@@ -185,9 +185,9 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
                 // Set playback speed
                 exoplayer.setPlaybackSpeed(playbackSpeed)
 
-                /** If the player is created again when app is resumed,
-                 *  we need to make sure that we use previously added media items
-                 *  rather than initializing player with empty list. */
+                // If the player initializes again when app resumes,
+                // we need to make sure that we use previously added media items
+                // rather than initializing player with empty list.
                 if (mediaItems.isNotEmpty()) {
                     Log.v(LOG_TAG, "setupPlayer : Using previously added media items.")
                     mediaItems.forEach { item ->
@@ -336,7 +336,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     fun HasPrevious(): Boolean = exoplayer?.hasPrevious() ?: false
 
     @SimpleProperty(description = "Get current windows index. Returns `-1` if player is not initialized.")
-    fun CurrentWindowIndex(): Int = if (exoplayer?.currentWindowIndex != null) exoplayer?.currentWindowIndex!! + 1 else -1
+    fun CurrentWindowIndex(): Int = exoplayer?.currentWindowIndex ?: -1
 
     /** Seek to */
     @SimpleFunction(description = "Seek media to given position.")
@@ -410,7 +410,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
      * @param path Path to media file either offline or online.
      * @param subtitles List of Subtitles.
      *
-     * @return MediaItem or null if media item is not created successfully
+     * @return MediaItem or null in case of an error
      */
     @SimpleFunction(description = "Create new media item")
     fun CreateMedia(path: String, subtitles: YailList): Any? {
@@ -435,14 +435,14 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     }
 
     @SimpleFunction(description = "Creates a Subtitle Object.")
-    fun SubtitleTrack(path: String, mimeType: String,label: String, language: String, flags: Int): String {
+    fun SubtitleTrack(path: String, mimeType: String, label: String, language: String, flags: Int): String {
         return """
             {
                 path: $path,
                 mime_type: $mimeType,
                 selection_flags: $flags,
-                ${if(label.isNotEmpty()) "label: $label," else ""}
-                ${if(language.isNotEmpty()) "language: $language" else ""}
+                ${if (label.isNotEmpty()) "label: $label," else ""}
+                ${if (language.isNotEmpty()) "language: $language" else ""}
             }
         """.trimIndent()
     }
@@ -453,12 +453,12 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
      * @param path Path to media file either offline or online.
      * @param subtitles List of Subtitles.
      * @param mediaId Custom media id or an empty string to use path as default id.
-     * @param mimeType The MIME type may be used as a hint for inferring the type of the media item.
+     * @param mimeType The MIME type that may be used as a hint for inferring the type of the media item.
      * @param startPositionMs Sets the optional start position in milliseconds which must be a value larger than or equal to zero.
      * @param endPositionMs Sets the optional end position in milliseconds which must be a value larger than or equal to zero, or TimeEndOfSource.
      * @param relativeToLiveWindow Sets whether the start/end positions should move with the live window for live streams.
      * @param relativeToDefaultPosition Sets whether the start position and the end position are relative to the default position in the window.
-     * @param startsAtKeyFrame Sets whether the start point is guaranteed to be a key frame.
+     * @param startsAtKeyFrame Sets whether the start point guarantees to be a key frame.
      * @param drmScheme The drm scheme that will be used to get respective drm UUID.
      * @param drmLicenseUri Sets the optional default DRM license server URI.
      * @param drmForceDefaultLicenseUri Sets whether to force use the default DRM license server URI even if the media specifies its own DRM license server URI.
@@ -472,7 +472,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
      * @param liveMinPlaybackSpeed Sets the optional minimum playback speed for live stream speed adjustment.
      * @param liveMaxPlaybackSpeed Sets the optional maximum playback speed for live stream speed adjustment.
      *
-     * @return MediaItem or null if media item is not created successfully
+     * @return MediaItem or null in case of an error
      */
     @SimpleFunction(description = "Create new media item with extra customizations.")
     fun CreateMediaExtended(
