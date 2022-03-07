@@ -7,7 +7,6 @@ import android.graphics.Typeface
 import android.os.Build.VERSION
 import android.util.Log
 import android.util.TypedValue
-import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import com.google.android.exoplayer2.C
@@ -152,7 +151,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
         }
 
     private val trackSelector: DefaultTrackSelector?
-    get() = exoPlayer?.trackSelector as? DefaultTrackSelector
+        get() = exoPlayer?.trackSelector as? DefaultTrackSelector
 
     // Initialize player view
     private fun initialize(layout: HVArrangement, exoPlayer: SimpleExoPlayer, playerType: PlayerViewType) {
@@ -161,50 +160,43 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
         this.playerType = playerType
         val viewGroup: ViewGroup = layout.view as ViewGroup
         if (isDebugMode) Log.v(LOG_TAG, "initialize | Debug mode : true")
-        val playerAttributes = PlayerAttributes(
-            /* surfaceType */surfaceType,
-            /* useArtwork */useArtwork,
-            /* resizeMode */getResizeMode(resizeMode),
-            /* controllerTimeout */controllerTimeout,
-            /* hideOnTouch */hideOnTouch,
-            /* autoShowController */autoShowController,
-            /* showBuffering */getBufferingMode(bufferingMode),
-            /* useController */useController,
-            /* hideDuringAds */true,
-            /* isDebugMode */isDebugMode,
-            /* rewindMs */rewindMs,
-            /* fastForwardMs */fastForwardMs,
-            /* repeatToggleModes */getRepeatMode(repeatMode),
-            /* showRewindButton */showRewindButton,
-            /* showFastForwardButton */showFastForwardButton,
-            /* showPreviousButton */showPreviousButton,
-            /* showNextButton */showNextButton,
-            /* showShuffleButton */showShuffleButton,
-            /* showSubtitleButton */showSubtitlesButton,
-            /* showFullscreenButton */showFullscreenButton,
-            /* showVideoSettingsButton */showVideoSettingsButton,
-            /* animationEnabled */animationEnabled
+
+        val playerStyle = PlayerStyle(
+            surfaceType = surfaceType,
+            useArtWork = useArtwork,
+            resizeMode = getResizeMode(resizeMode),
+            controlsTimeoutMs = controllerTimeout,
+            hideOnTouch = hideOnTouch,
+            autoShowController = autoShowController,
+            showBuffering = getBufferingMode(bufferingMode),
+            useController = useController,
+            rewindMs = rewindMs,
+            fastForwardMs = fastForwardMs,
+            repeatToggleModes = getRepeatMode(repeatMode),
+            showRewindButton = showRewindButton,
+            showFastForwardButton = showFastForwardButton,
+            showPreviousButton = showPreviousButton,
+            showNextButton = showNextButton,
+            showShuffleButton = showShuffleButton,
+            showSubtitleButton = showSubtitlesButton,
+            showFullscreenButton = showFullscreenButton,
+            showVideoSettingsButton = showVideoSettingsButton,
+            animationEnabled = animationEnabled,
         )
 
-        val timeBarAttributes = TimeBarAttributes(
-            null,
-            trackHeight,
-            DefaultTimeBar.DEFAULT_TOUCH_TARGET_HEIGHT_DP,
-            Gravity.BOTTOM,
-            DefaultTimeBar.DEFAULT_AD_MARKER_WIDTH_DP,
-            thumbSize,
-            thumbSizeDisabled,
-            thumbSizeActive,
-            progressColor,
-            thumbColor,
-            bufferedColor,
-            trackColor,
-            DefaultTimeBar.DEFAULT_AD_MARKER_COLOR,
-            DefaultTimeBar.DEFAULT_PLAYED_AD_MARKER_COLOR
+        val progressBarStyle = ProgressBarStyle(
+            barHeight = trackHeight,
+            scrubberEnabledSize = thumbSize,
+            scrubberDisabledSize = thumbSizeDisabled,
+            scrubberDraggedSize = thumbSizeActive,
+            playedColor = progressColor,
+            scrubberColor = thumbColor,
+            bufferedColor = bufferedColor,
+            unPlayedColor = trackColor,
         )
 
         if (playerType == PlayerViewType.SimplePlayerView) {
-            playerView = PlayerView(context, timeBarAttributes, playerAttributes).also { view ->
+            playerView = PlayerView(context, playerStyle, progressBarStyle).also { view ->
                 view.player = exoPlayer
                 view.setKeepContentOnPlayerReset(true)
                 view.setControllerVisibilityListener {
@@ -212,7 +204,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
                 }
             }
         } else {
-            styledPlayerView = StyledPlayerView(context, timeBarAttributes, playerAttributes).also { view ->
+            styledPlayerView = StyledPlayerView(context, playerStyle, progressBarStyle).also { view ->
                 view.player = exoPlayer
                 view.setKeepContentOnPlayerReset(true)
                 view.setControllerVisibilityListener {
@@ -826,12 +818,12 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
 
     // Subtitle Bottom Padding
     @DesignerProperty(
-        defaultValue = "14",
-        editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_FLOAT
+        defaultValue = "8",
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_INTEGER
     )
     @SimpleProperty(description = "Set subtitle bottom padding")
     fun SubtitleBottomPadding(padding: Float) {
-        subtitleBottomPadding = padding
+        subtitleBottomPadding = padding / 100
         subtitleView?.setBottomPaddingFraction(padding)
     }
 
