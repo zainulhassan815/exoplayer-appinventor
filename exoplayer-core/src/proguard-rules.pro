@@ -20,31 +20,7 @@
 -dontwarn com.google.common.**
 -dontwarn androidx.recyclerview.widget.**
 -keepnames class com.google.android.exoplayer2**
-#-keepclassmembernames class com.google.android.exoplayer2** {
-#    public static *;
-#}
--keep class com.google.android.exoplayer2.ui** {
-    *;
-}
-# In order to add track selection in ExoplayerUI,
-# we need to keep these classes and some fields as
-# they are used by the track selection dialog.
--keepclasseswithmembers class com.google.android.exoplayer2.SimpleExoPlayer {
-    public com.google.android.exoplayer2.trackselection.TrackSelector getTrackSelector();
-}
--keepclasseswithmembers class com.google.android.exoplayer2.trackselection.DefaultTrackSelector {
-    *;
-}
--keepclasseswithmembers class com.google.android.exoplayer2.trackselection.MappingTrackSelector$MappedTrackInfo {
-    *;
-}
--keepclasseswithmembers class com.google.android.exoplayer2.source.TrackGroupArray {
-    public final int length;
-}
--keepclasseswithmembers class com.google.android.exoplayer2.Format {
-    public final int width;
-    public final int height;
-}
+
 # Proguard rules specific to the common module.
 ###############################################
 
@@ -87,16 +63,27 @@
 # Proguard rules specific to the UI module.
 #############################################
 
-# Constructor method accessed via reflection in TrackSelectionDialogBuilder
--dontnote androidx.appcompat.app.AlertDialog.Builder
--keepclassmembers class androidx.appcompat.app.AlertDialog$Builder {
-  <init>(android.content.Context, int);
-  public android.content.Context getContext();
-#  public androidx.appcompat.app.AlertDialog$Builder setTitle(java.lang.CharSequence);
-  public androidx.appcompat.app.AlertDialog$Builder setView(android.view.View);
-  public androidx.appcompat.app.AlertDialog$Builder setPositiveButton(int, android.content.DialogInterface$OnClickListener);
-  public androidx.appcompat.app.AlertDialog$Builder setNegativeButton(int, android.content.DialogInterface$OnClickListener);
-  public androidx.appcompat.app.AlertDialog create();
+-keep class com.google.android.exoplayer2.ui** {
+    *;
+}
+# In order to add track selection in ExoplayerUI,
+# we need to keep these classes and some fields as
+# they are used by the track selection dialog.
+-keepclasseswithmembers class com.google.android.exoplayer2.SimpleExoPlayer {
+    public com.google.android.exoplayer2.trackselection.TrackSelector getTrackSelector();
+}
+-keepclasseswithmembers class com.google.android.exoplayer2.trackselection.DefaultTrackSelector {
+    *;
+}
+-keepclasseswithmembers class com.google.android.exoplayer2.trackselection.MappingTrackSelector$MappedTrackInfo {
+    *;
+}
+-keepclasseswithmembers class com.google.android.exoplayer2.source.TrackGroupArray {
+    public final int length;
+}
+-keepclasseswithmembers class com.google.android.exoplayer2.Format {
+    public final int width;
+    public final int height;
 }
 
 # Constructors accessed via reflection in DefaultDownloaderFactory

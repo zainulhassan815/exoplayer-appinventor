@@ -1,5 +1,6 @@
 package com.dreamers.exoplayerui
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.graphics.Color
@@ -23,6 +24,7 @@ import com.google.appinventor.components.annotations.SimpleProperty
 import com.google.appinventor.components.common.PropertyTypeConstants
 import com.google.appinventor.components.runtime.*
 
+@SuppressLint("NewApi")
 @Suppress("FunctionName")
 class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(container.`$form`()), Component,
     OnPauseListener, OnResumeListener {
@@ -322,6 +324,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     fun HideSystemUI() {
         val window = (context as Activity).window
         window.decorView.fitsSystemWindows = true
+        @Suppress("Deprecation")
         window.decorView.systemUiVisibility = (
                 View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                         // Hide the nav bar and status bar
@@ -335,6 +338,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     @SimpleFunction(description = "Show System UI. Use with caution. Still in testing.")
     fun ShowSystemUI() {
         val window = (context as Activity).window
+        @Suppress("Deprecation")
         window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_VISIBLE)
     }
 
