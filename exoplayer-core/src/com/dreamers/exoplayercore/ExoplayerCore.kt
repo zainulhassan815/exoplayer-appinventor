@@ -114,6 +114,12 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         Log.v(LOG_TAG, "releasePlayer : Released = ${exoplayer == null}")
     }
 
+    private fun YailList.toSubtitlesArray(): List<MediaItem.Subtitle> = toStringArray().mapNotNull {
+        parseSubtitleData(it)
+    }
+
+    private fun YailDictionary.toHeadersMap(): Map<String, String> = associate { it.getString(0) to it.getString(1) }
+
     /** Convert `MediaMetadata` to `YailDictionary` so it can be used easily in blocks. */
     private fun MediaMetadata.toJson(): YailDictionary {
         val data = JSONObject().apply {
@@ -385,16 +391,12 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     fun AddMedia(path: String, subtitles: YailList) {
         try {
             if (path.isNotEmpty()) {
-                val builder = MediaItem.Builder().setUri(path)
-                val subtitleArray: ArrayList<MediaItem.Subtitle> = arrayListOf()
-
-                subtitles.toStringArray().forEach { subtitleData ->
-                    val subtitle = parseSubtitleData(subtitleData)
-                    subtitle?.let { subtitleArray.add(subtitle) }
+                val mediaItem = MediaItem.Builder().run {
+                    setUri(path)
+                    setSubtitles(subtitles.toSubtitlesArray())
+                    setMediaId(path)
+                    build()
                 }
-                builder.setSubtitles(subtitleArray)
-                builder.setMediaId(path)
-                val mediaItem = builder.build()
                 mediaItems.add(mediaItem)
                 exoplayer?.addMediaItem(mediaItem)
             } else throw Exception("Path is null or empty")
@@ -414,23 +416,19 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
      */
     @SimpleFunction(description = "Create new media item")
     fun CreateMedia(path: String, subtitles: YailList): Any? {
-        try {
+        return try {
             if (path.isNotEmpty()) {
-                val builder = MediaItem.Builder().setUri(path)
-                val subtitleArray: ArrayList<MediaItem.Subtitle> = arrayListOf()
-
-                subtitles.toStringArray().forEach { subtitleData ->
-                    val subtitle = parseSubtitleData(subtitleData)
-                    subtitle?.let { subtitleArray.add(subtitle) }
+                MediaItem.Builder().run {
+                    setUri(path)
+                    setSubtitles(subtitles.toSubtitlesArray())
+                    setMediaId(path)
+                    build()
                 }
-                builder.setSubtitles(subtitleArray)
-                builder.setMediaId(path)
-                return builder.build()
             } else throw Exception("Path is null or empty")
         } catch (e: Exception) {
             Log.e(LOG_TAG, "AddMedia : Error = ${e.message}")
             OnError("AddMedia : Error = ${e.message}")
-            return null
+            null
         }
     }
 
@@ -500,18 +498,11 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     ): Any? {
         try {
             if (path.isNotEmpty()) {
-                val builder = MediaItem.Builder().setUri(path)
-                val subtitleArray: ArrayList<MediaItem.Subtitle> = arrayListOf()
-
-                subtitles.toStringArray().forEach { subtitleData ->
-                    val subtitle = parseSubtitleData(subtitleData)
-                    subtitle?.let { subtitleArray.add(subtitle) }
-                }
-
-                builder.apply {
+                return MediaItem.Builder().run {
+                    setUri(path)
                     if (mediaId.isNotEmpty()) setMediaId(mediaId) else setMediaId(path)
                     if (mimeType.isNotEmpty()) setMimeType(mimeType)
-                    setSubtitles(subtitleArray)
+                    setSubtitles(subtitles.toSubtitlesArray())
 
                     // Clipping properties
                     setClipStartPositionMs(startPositionMs)
@@ -527,12 +518,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
                             setDrmUuid(drmUUID)
                             if (drmLicenseUri.isNotEmpty()) setDrmLicenseUri(drmLicenseUri)
                             setDrmForceDefaultLicenseUri(drmForceDefaultLicenseUri)
-
-                            val headers: MutableMap<String, String> = mutableMapOf()
-                            drmLicenseRequestHeaders.iterator()
-                                .forEach { pair -> headers[pair.getString(0)] = pair.getString(1) }
-                            setDrmLicenseRequestHeaders(headers)
-
+                            setDrmLicenseRequestHeaders(drmLicenseRequestHeaders.toHeadersMap())
                             setDrmMultiSession(drmMultiSession)
                             setDrmPlayClearContentWithoutKey(drmPlayClearContentWithoutKey)
                             if (drmSessionForClearContent) setDrmSessionForClearTypes(
@@ -550,10 +536,8 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
                     setLiveMaxOffsetMs(liveMaxOffsetMs)
                     setLiveMinPlaybackSpeed(liveMinPlaybackSpeed)
                     setLiveMaxPlaybackSpeed(liveMaxPlaybackSpeed)
+                    build()
                 }
-
-                return builder.build()
-
             } else throw Exception("Path is null or empty")
         } catch (e: Exception) {
             Log.e(LOG_TAG, "AddMedia : Error = ${e.message}")
@@ -585,12 +569,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
             // Create http data source
             val dataSourceFactory = DefaultHttpDataSource.Factory().apply {
                 if (userAgent.isNotEmpty()) setUserAgent(userAgent)
-
-                val headers: MutableMap<String, String> = mutableMapOf()
-                requestHeaders.iterator()
-                    .forEach { pair -> headers[pair.getString(0)] = pair.getString(1) }
-                setDefaultRequestProperties(headers)
-
+                setDefaultRequestProperties(requestHeaders.toHeadersMap())
                 setAllowCrossProtocolRedirects(allowCrossProtocolRedirects)
             }
 
@@ -623,12 +602,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
             // Create http data source
             val dataSourceFactory = DefaultHttpDataSource.Factory().apply {
                 if (userAgent.isNotEmpty()) setUserAgent(userAgent)
-
-                val headers: MutableMap<String, String> = mutableMapOf()
-                requestHeaders.iterator()
-                    .forEach { pair -> headers[pair.getString(0)] = pair.getString(1) }
-                setDefaultRequestProperties(headers)
-
+                setDefaultRequestProperties(requestHeaders.toHeadersMap())
                 setAllowCrossProtocolRedirects(allowCrossProtocolRedirects)
             }
 
