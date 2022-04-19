@@ -184,10 +184,16 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
             showFullscreenButton = showFullscreenButton,
             showVideoSettingsButton = showVideoSettingsButton,
             animationEnabled = animationEnabled,
+            timeBarMinUpdateIntervalMs = StyledPlayerControlView.DEFAULT_TIME_BAR_MIN_UPDATE_INTERVAL_MS,
+            hideAtMs = C.TIME_UNSET,
+            hideDuringAds = true
         )
 
         val progressBarStyle = ProgressBarStyle(
+            scrubberDrawable = null,
             barHeight = trackHeight,
+            touchTargetHeight = DefaultTimeBar.DEFAULT_TOUCH_TARGET_HEIGHT_DP,
+            barGravity = DefaultTimeBar.BAR_GRAVITY_BOTTOM,
             scrubberEnabledSize = thumbSize,
             scrubberDisabledSize = thumbSizeDisabled,
             scrubberDraggedSize = thumbSizeActive,
@@ -195,6 +201,9 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
             scrubberColor = thumbColor,
             bufferedColor = bufferedColor,
             unPlayedColor = trackColor,
+            adMarkerColor = DefaultTimeBar.DEFAULT_AD_MARKER_COLOR,
+            playedAdMarkerColor = DefaultTimeBar.DEFAULT_PLAYED_AD_MARKER_COLOR,
+            adMarkerWidth = DefaultTimeBar.DEFAULT_AD_MARKER_WIDTH_DP
         )
 
         if (playerType == PlayerViewType.SimplePlayerView) {
