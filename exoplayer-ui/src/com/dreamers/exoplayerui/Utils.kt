@@ -63,7 +63,7 @@ private fun getAssetPath(context: Context, file: String) = when {
             "/storage/emulated/0/Kodular/assets/$file"
         }
     }
-    else -> context.getExternalFilesDir(null).toString() + "/AppInventor/assets/$file"
+    else -> context.getExternalFilesDir(null).toString() + "/assets/$file"
 }
 
 internal fun getResizeMode(mode: String): Int = when (mode) {
