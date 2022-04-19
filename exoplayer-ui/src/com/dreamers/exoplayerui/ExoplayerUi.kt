@@ -363,16 +363,16 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
             val rendererIndex = getRenderIndex(trackType)
             val trackNameProvider =
                 if (trackType == C.TRACK_TYPE_VIDEO) TrackNameProvider { format -> "${format.width} x ${format.height}" } else null
-            val dialog = TrackSelectionDialogBuilder(context, title, trackSelector!!, rendererIndex!!)
+            TrackSelectionDialogBuilder(context, title, trackSelector!!, rendererIndex!!)
                 .setShowDisableOption(showDisableOption)
                 .setAllowAdaptiveSelections(allowAdaptiveSelections)
                 .setAllowMultipleOverrides(allowMultipleOverrides)
                 .setTrackNameProvider(trackNameProvider)
                 .build()
-            dialog.apply {
-                setOnDismissListener { OnSettingsWindowDismiss(isFullscreen()) }
-                show()
-            }
+                .apply {
+                    setOnDismissListener { OnSettingsWindowDismiss(isFullscreen()) }
+                    show()
+                }
         }
     }
 
