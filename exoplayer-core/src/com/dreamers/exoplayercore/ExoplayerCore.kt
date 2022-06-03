@@ -14,6 +14,7 @@ import com.google.android.exoplayer2.text.Cue
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.util.EventLogger
+import com.google.android.exoplayer2.util.NotificationUtil
 import com.google.android.exoplayer2.util.Util
 import com.google.android.exoplayer2.video.VideoSize
 import com.google.appinventor.components.annotations.DesignerProperty
@@ -37,6 +38,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     private var exoplayer: SimpleExoPlayer? = null
     private var trackSelector: DefaultTrackSelector? = null
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private var disposePlayer = true
 
     init {
         // Need to register extension for activity changes
@@ -64,7 +66,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     // On Pause
     override fun onPause() {
         Log.v(LOG_TAG, "onPause")
-        if (Util.SDK_INT < 24) {
+        if (disposePlayer && Util.SDK_INT < 24) {
             releasePlayer()
         }
     }
@@ -72,7 +74,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     // On Stop
     override fun onStop() {
         Log.v(LOG_TAG, "onStop")
-        if (Util.SDK_INT >= 24) {
+        if (disposePlayer && Util.SDK_INT >= 24) {
             releasePlayer()
         }
     }
@@ -80,7 +82,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     // On Resume
     override fun onResume() {
         Log.v(LOG_TAG, "onResume")
-        if ((Util.SDK_INT < 24 || exoplayer == null)) {
+        if (disposePlayer && (Util.SDK_INT < 24 || exoplayer == null)) {
             resumePlayer()
         }
     }
@@ -372,6 +374,9 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         shouldPlayWhenReady = play
     }
 
+    @SimpleProperty(description = "Check if player can play when media is ready for playback.")
+    fun PlayWhenReady() = exoplayer?.playWhenReady ?: false
+
     /** Clear Media Items */
     @SimpleFunction(description = "Clear media items")
     fun ClearMediaItems() {
@@ -661,7 +666,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     fun Format(mills: Int): String {
         val seconds: Long = mills.div(1000L)
         return String.format(
-            Locale.US,
+            Locale.getDefault(),
             "%02d:%02d:%02d",
             seconds / 3600L,
             seconds % 3600L / 60L,
@@ -677,6 +682,11 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     @SimpleFunction(description = "Decrease device volume.")
     fun DecreaseVolume() {
         exoplayer?.decreaseDeviceVolume()
+    }
+
+    @SimpleProperty(description = "Set whether to destroy player when app moves to background. Default true.")
+    fun DisposePlayerOnPause(dispose: Boolean) {
+        disposePlayer = dispose
     }
 
     @SimpleProperty(description = "Check if video is playing or not.")
