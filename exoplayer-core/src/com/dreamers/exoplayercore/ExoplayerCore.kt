@@ -111,7 +111,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         }
         exoplayer = null
         trackSelector = null
-        Log.v(LOG_TAG, "releasePlayer : Released = ${exoplayer == null}")
+        Log.v(LOG_TAG, "releasePlayer : Released = true")
     }
 
     private fun YailList.toSubtitlesArray(): List<MediaItem.Subtitle> = toStringArray().mapNotNull {
@@ -212,7 +212,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
             }
 
         // Change value of in player instantiated variable
-        isPlayerInitialized = exoplayer != null
+        isPlayerInitialized = true
     }
 
     override fun onPlaybackStateChanged(state: Int) {
