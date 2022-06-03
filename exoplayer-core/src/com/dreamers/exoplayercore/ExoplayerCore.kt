@@ -1,17 +1,27 @@
 package com.dreamers.exoplayercore
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.media.AudioManager
 import android.net.Uri
 import android.util.Log
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.source.MediaSource
+import com.google.android.exoplayer2.source.dash.DashMediaSource
+import com.google.android.exoplayer2.source.hls.HlsMediaSource
+import com.google.android.exoplayer2.text.Cue
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.util.EventLogger
+import com.google.android.exoplayer2.util.NotificationUtil
 import com.google.android.exoplayer2.util.Util
 import com.google.android.exoplayer2.video.VideoSize
+import com.google.appinventor.components.annotations.DesignerProperty
 import com.google.appinventor.components.annotations.SimpleEvent
 import com.google.appinventor.components.annotations.SimpleFunction
 import com.google.appinventor.components.annotations.SimpleProperty
+import com.google.appinventor.components.common.PropertyTypeConstants
 import com.google.appinventor.components.runtime.*
 import com.google.appinventor.components.runtime.util.JsonUtil
 import com.google.appinventor.components.runtime.util.YailDictionary
@@ -27,6 +37,8 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     private val context: Context = container.`$context`()
     private var exoplayer: SimpleExoPlayer? = null
     private var trackSelector: DefaultTrackSelector? = null
+    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private var disposePlayer = true
 
     init {
         // Need to register extension for activity changes
@@ -42,7 +54,9 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     private var shouldPlayWhenReady = false
 
     private var isPlayerInitialized = false
-    private val mediaItems: ArrayList<MediaItem> = arrayListOf()
+    private val mediaItems: ArrayList<Any> = arrayListOf()
+
+    private var playbackSpeed: Float = 1f
 
 
     companion object {
@@ -52,7 +66,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     // On Pause
     override fun onPause() {
         Log.v(LOG_TAG, "onPause")
-        if (Util.SDK_INT < 24) {
+        if (disposePlayer && Util.SDK_INT < 24) {
             releasePlayer()
         }
     }
@@ -60,7 +74,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     // On Stop
     override fun onStop() {
         Log.v(LOG_TAG, "onStop")
-        if (Util.SDK_INT >= 24) {
+        if (disposePlayer && Util.SDK_INT >= 24) {
             releasePlayer()
         }
     }
@@ -68,7 +82,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     // On Resume
     override fun onResume() {
         Log.v(LOG_TAG, "onResume")
-        if ((Util.SDK_INT < 24 || exoplayer == null)) {
+        if (disposePlayer && (Util.SDK_INT < 24 || exoplayer == null)) {
             resumePlayer()
         }
     }
@@ -78,17 +92,17 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         releasePlayer()
     }
 
-    // Check if should resume player.
+    // Check if you should resume player.
     private fun resumePlayer() {
         if (exoplayer == null && isPlayerInitialized) {
             setupPlayer()
             // Call app resume here
-            Log.v(LOG_TAG,"OnAppResume")
+            Log.v(LOG_TAG, "OnAppResume")
             OnAppResume()
         }
     }
 
-    // Release player from memory
+    /** Release player from memory. It is necessary to release the resources when player is no longer visible. */
     private fun releasePlayer() {
         exoplayer?.run {
             playbackPosition = this.currentPosition
@@ -99,28 +113,36 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         }
         exoplayer = null
         trackSelector = null
-        Log.v(LOG_TAG, "releasePlayer : Released = ${exoplayer == null}")
+        Log.v(LOG_TAG, "releasePlayer : Released = true")
     }
 
+    private fun YailList.toSubtitlesArray(): List<MediaItem.Subtitle> = toStringArray().mapNotNull {
+        parseSubtitleData(it)
+    }
+
+    private fun YailDictionary.toHeadersMap(): Map<String, String> = associate { it.getString(0) to it.getString(1) }
+
+    /** Convert `MediaMetadata` to `YailDictionary` so it can be used easily in blocks. */
     private fun MediaMetadata.toJson(): YailDictionary {
-        val data = JSONObject().also { obj ->
-            obj.put("title", this.title.toString())
-            obj.put("artist", this.artist.toString())
-            obj.put("albumTitle", this.albumTitle.toString())
-            obj.put("albumArtist", this.albumArtist.toString())
-            obj.put("displayTitle", this.displayTitle.toString())
-            obj.put("subtitle", this.subtitle.toString())
-            obj.put("description", this.description.toString())
-            obj.put("media_uri", this.mediaUri.toString())
-            obj.put("artwork_uri", this.artworkUri.toString())
-            obj.put("track_number", this.trackNumber)
-            obj.put("total_tracks", this.totalTrackCount)
-            obj.put("year", this.year)
-            obj.put("playable", this.isPlayable)
+        val data = JSONObject().apply {
+            put("title", title)
+            put("artist", artist)
+            put("albumTitle", albumTitle)
+            put("albumArtist", albumArtist)
+            put("displayTitle", displayTitle)
+            put("subtitle", subtitle)
+            put("description", description)
+            put("media_uri", mediaUri)
+            put("artwork_uri", artworkUri)
+            put("track_number", trackNumber)
+            put("total_tracks", totalTrackCount)
+            put("year", year)
+            put("playable", isPlayable)
         }
         return JsonUtil.getDictionaryFromJsonObject(data)
     }
 
+    /** Returns `String` if it is present in JSONObject else `null`. */
     private fun JSONObject.getStringOrNull(key: String): String? {
         return try {
             getString(key)
@@ -129,6 +151,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         }
     }
 
+    /** Returns `Integer` if it is present in JSONObject else `null`. */
     private fun JSONObject.getIntOrNull(key: String): Int? {
         return try {
             getInt(key)
@@ -137,6 +160,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         }
     }
 
+    /** Converts JSON String into `MediaItem.Subtitle`. */
     private fun parseSubtitleData(data: String): MediaItem.Subtitle? {
         try {
             val jsonObject = JSONObject(data)
@@ -147,13 +171,13 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
             val selectionFlags = jsonObject.getIntOrNull("selection_flags") ?: 0
             return MediaItem.Subtitle(Uri.parse(uri), mimeType, language, selectionFlags, 0, label)
         } catch (e: JSONException) {
-            Log.e(LOG_TAG, "parseSubtitleData | Failed to parse data : $data with error : $e")
-            OnError("Failed to parse data : $data with error : $e")
+            Log.e(LOG_TAG, "parseSubtitleData | Failed to parse data : $data with error : ${e.message}")
+            OnError("Failed to parse data : $data with error : ${e.message}")
         }
         return null
     }
 
-    // Do basic setup for player
+    /** Initialize player. Here all the necessary setup should be done. */
     private fun setupPlayer() {
         Log.v(LOG_TAG, "Setting up player")
         trackSelector = DefaultTrackSelector(context)
@@ -166,9 +190,21 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
                 exoplayer.playWhenReady = shouldPlayWhenReady
                 exoplayer.prepare()
 
+                // Set playback speed
+                exoplayer.setPlaybackSpeed(playbackSpeed)
+
+                // If the player initializes again when app resumes,
+                // we need to make sure that we use previously added media items
+                // rather than initializing player with empty list.
                 if (mediaItems.isNotEmpty()) {
                     Log.v(LOG_TAG, "setupPlayer : Using previously added media items.")
-                    exoplayer.addMediaItems(mediaItems)
+                    mediaItems.forEach { item ->
+                        if (item is MediaItem) {
+                            exoplayer.addMediaItem(item)
+                        } else if (item is MediaSource) {
+                            exoplayer.addMediaSource(item)
+                        }
+                    }
                 }
 
                 // Add Listeners to player
@@ -178,7 +214,7 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
             }
 
         // Change value of in player instantiated variable
-        isPlayerInitialized = exoplayer != null
+        isPlayerInitialized = true
     }
 
     override fun onPlaybackStateChanged(state: Int) {
@@ -187,10 +223,10 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         OnStateChanged(state)
     }
 
-    override fun onPlayerError(error: ExoPlaybackException) {
-        super.onPlayerError(error)
-        Log.e(LOG_TAG, "onPlayerError : $error")
-        OnError(error.toString())
+    override fun onPlayerError(e: ExoPlaybackException) {
+        super.onPlayerError(e)
+        Log.e(LOG_TAG, "onPlayerError : ${e.message}")
+        OnError(e.toString())
     }
 
     override fun onIsLoadingChanged(isLoading: Boolean) {
@@ -256,7 +292,14 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         OnMediaItemTransition(mediaItem?.mediaId.toString(), reason)
     }
 
-    // Get exoplayer instance
+    override fun onCues(cues: MutableList<Cue>) {
+        super.onCues(cues)
+        val text = cues.map { cue -> cue.text }
+        val yailList = YailList.makeList(text)
+        OnCues(yailList)
+    }
+
+    /** Get exoplayer instance */
     @SimpleFunction(description = "Get Exoplayer instance to use in exoplayer ui")
     fun Player(): Any? = exoplayer
 
@@ -266,92 +309,384 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
         setupPlayer()
     }
 
-    // Play Video
+    /** Play Video */
     @SimpleFunction(description = "Play media")
     fun Play() {
         exoplayer?.play()
     }
 
-    // Pause Video
+    /** Pause Video */
     @SimpleFunction(description = "Pause media")
     fun Pause() {
         exoplayer?.pause()
     }
 
-    // Stop video
+    /** Stop video */
     @SimpleFunction(description = "Stop media.")
     fun Stop() {
         exoplayer?.stop()
     }
 
-    // Seek to
+    @SimpleFunction(description = "Play next media item in the playlist.")
+    fun Next() {
+        exoplayer?.next()
+    }
+
+    @SimpleFunction(description = "Play previous media item in the playlist.")
+    fun Previous() {
+        exoplayer?.previous()
+    }
+
+    @SimpleProperty(description = "Check if playlist has next media item.")
+    fun HasNext(): Boolean = exoplayer?.hasNext() ?: false
+
+    @SimpleProperty(description = "Check if playlist has previous media item.")
+    fun HasPrevious(): Boolean = exoplayer?.hasPrevious() ?: false
+
+    @SimpleProperty(description = "Get current windows index. Returns `-1` if player is not initialized.")
+    fun CurrentWindowIndex(): Int = exoplayer?.currentWindowIndex ?: -1
+
+    /** Seek to */
     @SimpleFunction(description = "Seek media to given position.")
     fun SeekTo(position: Long) {
         exoplayer?.seekTo(position)
     }
 
-    // Play when ready
+    @SimpleFunction(description = "Seek to media item at given position.")
+    fun SeekToWindow(position: Int) {
+        exoplayer?.seekToDefaultPosition(position)
+    }
+
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_FLOAT,
+        defaultValue = "1"
+    )
+    @SimpleProperty(description = "Set playback speed.")
+    fun PlaybackSpeed(speed: Float) {
+        playbackSpeed = speed
+        exoplayer?.setPlaybackSpeed(speed)
+    }
+
+    /** Play when ready */
     @SimpleProperty(description = "Should play automatically when ready")
     fun PlayWhenReady(play: Boolean) {
         exoplayer?.playWhenReady = play
         shouldPlayWhenReady = play
     }
 
-    // Clear Media Items
+    @SimpleProperty(description = "Check if player can play when media is ready for playback.")
+    fun PlayWhenReady() = exoplayer?.playWhenReady ?: false
+
+    /** Clear Media Items */
     @SimpleFunction(description = "Clear media items")
     fun ClearMediaItems() {
         exoplayer?.clearMediaItems()
         mediaItems.clear()
     }
 
-    // Set Repeat Modes
+    /** Set Repeat Modes */
     @SimpleProperty(description = "Set playback repeat modes")
     fun RepeatModes(modes: Int) {
         exoplayer?.repeatMode = modes
     }
 
-    // Add Media Item
+    /** Add Media Item */
+    @Deprecated("Use AddMediaItem with CreateMedia & CreateMediaExtended instead. This method will be removed in the newer version.")
     @SimpleFunction(description = "Add a new media item")
     fun AddMedia(path: String, subtitles: YailList) {
         try {
             if (path.isNotEmpty()) {
-                val builder = MediaItem.Builder().setUri(path)
-                val subtitleArray: ArrayList<MediaItem.Subtitle> = arrayListOf()
-
-                subtitles.toStringArray().forEach { subtitleData ->
-                    val subtitle = parseSubtitleData(subtitleData)
-                    subtitle?.let { subtitleArray.add(subtitle) }
+                val mediaItem = MediaItem.Builder().run {
+                    setUri(path)
+                    setSubtitles(subtitles.toSubtitlesArray())
+                    setMediaId(path)
+                    build()
                 }
-                builder.setSubtitles(subtitleArray)
-                builder.setMediaId(path)
-                val mediaItem = builder.build()
                 mediaItems.add(mediaItem)
                 exoplayer?.addMediaItem(mediaItem)
             } else throw Exception("Path is null or empty")
         } catch (e: Exception) {
-            Log.e(LOG_TAG, "AddMedia : Error = $e")
-            OnError("AddMedia : Error = $e")
+            Log.e(LOG_TAG, "AddMedia : Error = ${e.message}")
+            OnError("AddMedia : Error = ${e.message}")
         }
     }
 
-    // Remove Media Item at index
+    /**
+     * Create a basic media item
+     *
+     * @param path Path to media file either offline or online.
+     * @param subtitles List of Subtitles.
+     *
+     * @return MediaItem or null in case of an error
+     */
+    @SimpleFunction(description = "Create new media item")
+    fun CreateMedia(path: String, subtitles: YailList): Any? {
+        return try {
+            if (path.isNotEmpty()) {
+                MediaItem.Builder().run {
+                    setUri(path)
+                    setSubtitles(subtitles.toSubtitlesArray())
+                    setMediaId(path)
+                    build()
+                }
+            } else throw Exception("Path is null or empty")
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "AddMedia : Error = ${e.message}")
+            OnError("AddMedia : Error = ${e.message}")
+            null
+        }
+    }
+
+    @SimpleFunction(description = "Creates a Subtitle Object.")
+    fun SubtitleTrack(path: String, mimeType: String, label: String, language: String, flags: Int): String {
+        return """
+            {
+                path: $path,
+                mime_type: $mimeType,
+                selection_flags: $flags,
+                ${if (label.isNotEmpty()) "label: $label," else ""}
+                ${if (language.isNotEmpty()) "language: $language" else ""}
+            }
+        """.trimIndent()
+    }
+
+    /**
+     * Create new media item with extra customizations.
+     *
+     * @param path Path to media file either offline or online.
+     * @param subtitles List of Subtitles.
+     * @param mediaId Custom media id or an empty string to use path as default id.
+     * @param mimeType The MIME type that may be used as a hint for inferring the type of the media item.
+     * @param startPositionMs Sets the optional start position in milliseconds which must be a value larger than or equal to zero.
+     * @param endPositionMs Sets the optional end position in milliseconds which must be a value larger than or equal to zero, or TimeEndOfSource.
+     * @param relativeToLiveWindow Sets whether the start/end positions should move with the live window for live streams.
+     * @param relativeToDefaultPosition Sets whether the start position and the end position are relative to the default position in the window.
+     * @param startsAtKeyFrame Sets whether the start point guarantees to be a key frame.
+     * @param drmScheme The drm scheme that will be used to get respective drm UUID.
+     * @param drmLicenseUri Sets the optional default DRM license server URI.
+     * @param drmForceDefaultLicenseUri Sets whether to force use the default DRM license server URI even if the media specifies its own DRM license server URI.
+     * @param drmLicenseRequestHeaders Sets the optional request headers attached to the DRM license request.
+     * @param drmMultiSession Sets whether the DRM configuration is multi session enabled.
+     * @param drmPlayClearContentWithoutKey Sets whether clear samples within protected content should be played when keys for the encrypted part of the content have yet to be loaded.
+     * @param drmSessionForClearContent Sets whether a DRM session should be used for clear tracks of type TrackTypeVideo and TrackTypeAudio.
+     * @param liveTargetOffsetMs Sets the optional target offset from the live edge for live streams, in milliseconds.
+     * @param liveMinOffsetMs Sets the optional minimum offset from the live edge for live streams, in milliseconds.
+     * @param liveMaxOffsetMs Sets the optional maximum offset from the live edge for live streams, in milliseconds.
+     * @param liveMinPlaybackSpeed Sets the optional minimum playback speed for live stream speed adjustment.
+     * @param liveMaxPlaybackSpeed Sets the optional maximum playback speed for live stream speed adjustment.
+     *
+     * @return MediaItem or null in case of an error
+     */
+    @SimpleFunction(description = "Create new media item with extra customizations.")
+    fun CreateMediaExtended(
+        path: String,
+        subtitles: YailList,
+        mediaId: String,
+        mimeType: String,
+        startPositionMs: Long,
+        endPositionMs: Long,
+        relativeToLiveWindow: Boolean,
+        relativeToDefaultPosition: Boolean,
+        startsAtKeyFrame: Boolean,
+        drmScheme: String,
+        drmLicenseUri: String,
+        drmForceDefaultLicenseUri: Boolean,
+        drmLicenseRequestHeaders: YailDictionary,
+        drmMultiSession: Boolean,
+        drmPlayClearContentWithoutKey: Boolean,
+        drmSessionForClearContent: Boolean,
+        liveTargetOffsetMs: Long,
+        liveMinOffsetMs: Long,
+        liveMaxOffsetMs: Long,
+        liveMinPlaybackSpeed: Float,
+        liveMaxPlaybackSpeed: Float
+    ): Any? {
+        try {
+            if (path.isNotEmpty()) {
+                return MediaItem.Builder().run {
+                    setUri(path)
+                    if (mediaId.isNotEmpty()) setMediaId(mediaId) else setMediaId(path)
+                    if (mimeType.isNotEmpty()) setMimeType(mimeType)
+                    setSubtitles(subtitles.toSubtitlesArray())
+
+                    // Clipping properties
+                    setClipStartPositionMs(startPositionMs)
+                    setClipEndPositionMs(endPositionMs)
+                    setClipRelativeToLiveWindow(relativeToLiveWindow)
+                    setClipRelativeToDefaultPosition(relativeToDefaultPosition)
+                    setClipStartsAtKeyFrame(startsAtKeyFrame)
+
+                    // Drm properties
+                    if (drmScheme.isNotEmpty()) {
+                        val drmUUID = Util.getDrmUuid(drmScheme)
+                        if (drmUUID != null) {
+                            setDrmUuid(drmUUID)
+                            if (drmLicenseUri.isNotEmpty()) setDrmLicenseUri(drmLicenseUri)
+                            setDrmForceDefaultLicenseUri(drmForceDefaultLicenseUri)
+                            setDrmLicenseRequestHeaders(drmLicenseRequestHeaders.toHeadersMap())
+                            setDrmMultiSession(drmMultiSession)
+                            setDrmPlayClearContentWithoutKey(drmPlayClearContentWithoutKey)
+                            if (drmSessionForClearContent) setDrmSessionForClearTypes(
+                                listOf(
+                                    C.TRACK_TYPE_VIDEO,
+                                    C.TRACK_TYPE_AUDIO
+                                )
+                            )
+                        }
+                    }
+
+                    // Live properties
+                    setLiveTargetOffsetMs(liveTargetOffsetMs)
+                    setLiveMinOffsetMs(liveMinOffsetMs)
+                    setLiveMaxOffsetMs(liveMaxOffsetMs)
+                    setLiveMinPlaybackSpeed(liveMinPlaybackSpeed)
+                    setLiveMaxPlaybackSpeed(liveMaxPlaybackSpeed)
+                    build()
+                }
+            } else throw Exception("Path is null or empty")
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "AddMedia : Error = ${e.message}")
+            OnError("AddMedia : Error = ${e.message}")
+            return null
+        }
+    }
+
+    /**
+     * Create HLS media source with given media item.
+     *
+     * @param mediaItem MediaItem
+     * @param userAgent The user agent that will be used, or empty string to use the default user agent of the underlying platform.
+     * @param requestHeaders Http Request Headers.
+     * @param allowCrossProtocolRedirects Whether to allow cross protocol redirects (i.e. redirects from HTTP to HTTPS or vice versa).
+     * @param allowChunklessPreparation Sets whether chunkless preparation is allowed. If true, preparation without chunk downloads will be enabled for streams that provide sufficient information in their master playlist.
+     *
+     * @return HlsMediaSource or null if given media item is not valid.
+     */
+    @SimpleFunction(description = "Create HLS media source with given media item.")
+    fun HlsSource(
+        mediaItem: Any?,
+        userAgent: String,
+        requestHeaders: YailDictionary,
+        allowCrossProtocolRedirects: Boolean,
+        allowChunklessPreparation: Boolean,
+    ): Any? {
+        if (mediaItem != null && mediaItem is MediaItem) {
+            // Create http data source
+            val dataSourceFactory = DefaultHttpDataSource.Factory().apply {
+                if (userAgent.isNotEmpty()) setUserAgent(userAgent)
+                setDefaultRequestProperties(requestHeaders.toHeadersMap())
+                setAllowCrossProtocolRedirects(allowCrossProtocolRedirects)
+            }
+
+            // return HlsMediaSource
+            return HlsMediaSource.Factory(dataSourceFactory)
+                .setAllowChunklessPreparation(allowChunklessPreparation)
+                .createMediaSource(mediaItem)
+        }
+        return null
+    }
+
+    /**
+     * Create Dash media source with given media item.
+     *
+     * @param mediaItem MediaItem
+     * @param userAgent The user agent that will be used, or empty string to use the default user agent of the underlying platform.
+     * @param requestHeaders Http Request Headers.
+     * @param allowCrossProtocolRedirects Whether to allow cross protocol redirects (i.e. redirects from HTTP to HTTPS or vice versa).
+     *
+     * @return DashMediaSource or null if given media item is not valid.
+     */
+    @SimpleFunction(description = "Create Dash media source with given media item.")
+    fun DashSource(
+        mediaItem: Any?,
+        userAgent: String,
+        requestHeaders: YailDictionary,
+        allowCrossProtocolRedirects: Boolean,
+    ): Any? {
+        if (mediaItem != null && mediaItem is MediaItem) {
+            // Create http data source
+            val dataSourceFactory = DefaultHttpDataSource.Factory().apply {
+                if (userAgent.isNotEmpty()) setUserAgent(userAgent)
+                setDefaultRequestProperties(requestHeaders.toHeadersMap())
+                setAllowCrossProtocolRedirects(allowCrossProtocolRedirects)
+            }
+
+            return DashMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem)
+        }
+        return null
+    }
+
+    /**
+     * Add a new media source
+     *
+     * @param source Media source that will be added to the player.
+     * @see HlsSource
+     */
+    @SimpleFunction(description = "Add a new media source.")
+    fun AddMediaSource(source: Any?) {
+        if (source != null && source is MediaSource) {
+            mediaItems.add(source)
+            exoplayer?.addMediaSource(source)
+        }
+    }
+
+    /**
+     * Add a new media item to the player.
+     *
+     * @param mediaItem MediaItem object that will be added to the player
+     * @see CreateMedia
+     * @see CreateMediaExtended
+     */
+    @SimpleFunction(description = "Add media item")
+    fun AddMediaItem(mediaItem: Any?) {
+        if (mediaItem != null && mediaItem is MediaItem) {
+            mediaItems.add(mediaItem)
+            exoplayer?.addMediaItem(mediaItem)
+        }
+    }
+
+    @SimpleProperty
+    fun RateUnset() = C.RATE_UNSET
+
+    @SimpleProperty
+    fun TimeUnset() = C.TIME_UNSET
+
+    @SimpleProperty
+    fun TimeEndOfSource() = C.TIME_END_OF_SOURCE
+
+    /** Remove Media Item at index */
     @SimpleFunction(description = "Remove media item at a specific index")
     fun RemoveMedia(index: Int) {
         exoplayer?.removeMediaItem(index)
         mediaItems.removeAt(index)
     }
 
-    // Format milliseconds to time
+    /** Format milliseconds to time */
     @SimpleFunction(description = "Convert milliseconds to hh:mm:ss time format")
     fun Format(mills: Int): String {
         val seconds: Long = mills.div(1000L)
         return String.format(
-            Locale.US,
+            Locale.getDefault(),
             "%02d:%02d:%02d",
             seconds / 3600L,
             seconds % 3600L / 60L,
             seconds % 60L,
         )
+    }
+
+    @SimpleFunction(description = "Increment device volume.")
+    fun IncreaseVolume() {
+        exoplayer?.increaseDeviceVolume()
+    }
+
+    @SimpleFunction(description = "Decrease device volume.")
+    fun DecreaseVolume() {
+        exoplayer?.decreaseDeviceVolume()
+    }
+
+    @SimpleProperty(description = "Set whether to destroy player when app moves to background. Default true.")
+    fun DisposePlayerOnPause(dispose: Boolean) {
+        disposePlayer = dispose
     }
 
     @SimpleProperty(description = "Check if video is playing or not.")
@@ -374,6 +709,30 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
 
     @SimpleProperty(description = "Get the current playback state of exoplayer")
     fun PlaybackState() = exoplayer?.playbackState ?: 0
+
+    @SimpleProperty(description = "Get current device volume")
+    fun DeviceVolume(): Int = exoplayer?.deviceVolume ?: 0
+
+    @SimpleProperty(description = "Set current device volume")
+    fun DeviceVolume(volume: Int) {
+        exoplayer?.deviceVolume = volume
+    }
+
+    @SimpleProperty(description = "Check if device is muted or not")
+    fun DeviceMuted(): Boolean = exoplayer?.isDeviceMuted ?: false
+
+    @SimpleProperty(description = "Toggle device muted state")
+    fun DeviceMuted(muted: Boolean) {
+        exoplayer?.isDeviceMuted = muted
+    }
+
+    @SuppressLint("NewApi")
+    @SimpleProperty(description = "Minimum device volume")
+    fun MinVolume() = audioManager.getStreamMinVolume(AudioManager.STREAM_MUSIC)
+
+    @SuppressLint("NewApi")
+    @SimpleProperty(description = "Maximum device volume")
+    fun MaxVolume() = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
 
     // Events
     // =============================
@@ -435,6 +794,11 @@ class ExoplayerCore(container: ComponentContainer) : AndroidNonvisibleComponent(
     @SimpleEvent(description = "Event raised when current media item transitions.")
     fun OnMediaItemTransition(mediaUrl: String, reason: Int) {
         EventDispatcher.dispatchEvent(this, "OnMediaItemTransition", mediaUrl, reason)
+    }
+
+    @SimpleEvent(description = "Event raised when text output changes.")
+    fun OnCues(cues: YailList) {
+        EventDispatcher.dispatchEvent(this, "OnCues", cues)
     }
 
     // Property Getters

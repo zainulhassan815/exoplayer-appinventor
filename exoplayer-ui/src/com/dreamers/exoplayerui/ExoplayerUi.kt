@@ -1,5 +1,6 @@
 package com.dreamers.exoplayerui
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.graphics.Color
@@ -7,12 +8,14 @@ import android.graphics.Typeface
 import android.os.Build.VERSION
 import android.util.Log
 import android.util.TypedValue
-import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.DefaultControlDispatcher
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.text.Cue
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
+import com.google.android.exoplayer2.trackselection.MappingTrackSelector.MappedTrackInfo
 import com.google.android.exoplayer2.ui.*
 import com.google.appinventor.components.annotations.DesignerProperty
 import com.google.appinventor.components.annotations.SimpleEvent
@@ -21,6 +24,7 @@ import com.google.appinventor.components.annotations.SimpleProperty
 import com.google.appinventor.components.common.PropertyTypeConstants
 import com.google.appinventor.components.runtime.*
 
+@SuppressLint("NewApi")
 @Suppress("FunctionName")
 class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(container.`$form`()), Component,
     OnPauseListener, OnResumeListener {
@@ -35,6 +39,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     private var playerView: PlayerView? = null
     private var styledPlayerView: StyledPlayerView? = null
     private val isDebugMode = form is ReplForm
+    private var exoPlayer: SimpleExoPlayer? = null
 
     private var repeatMode: String = REPEAT_MODE_OFF
     private var bufferingMode: String = SHOW_BUFFERING_WHEN_PLAYING
@@ -47,6 +52,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     private var showFastForwardButton: Boolean = true
     private var showSubtitlesButton: Boolean = true
     private var showFullscreenButton: Boolean = true
+    private var showVideoSettingsButton: Boolean = true
     private var hideOnTouch: Boolean = true
     private var autoShowController: Boolean = true
     private var useArtwork: Boolean = true
@@ -146,55 +152,62 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
             }
         }
 
+    private val trackSelector: DefaultTrackSelector?
+        get() = exoPlayer?.trackSelector as? DefaultTrackSelector
+
     // Initialize player view
     private fun initialize(layout: HVArrangement, exoPlayer: SimpleExoPlayer, playerType: PlayerViewType) {
 
+        this.exoPlayer = exoPlayer
         this.playerType = playerType
         val viewGroup: ViewGroup = layout.view as ViewGroup
         if (isDebugMode) Log.v(LOG_TAG, "initialize | Debug mode : true")
-        val playerAttributes = PlayerAttributes(
-            /* surfaceType */surfaceType,
-            /* useArtwork */useArtwork,
-            /* resizeMode */getResizeMode(resizeMode),
-            /* controllerTimeout */controllerTimeout,
-            /* hideOnTouch */hideOnTouch,
-            /* autoShowController */autoShowController,
-            /* showBuffering */getBufferingMode(bufferingMode),
-            /* useController */useController,
-            /* hideDuringAds */true,
-            /* isDebugMode */isDebugMode,
-            /* rewindMs */rewindMs,
-            /* fastForwardMs */fastForwardMs,
-            /* repeatToggleModes */getRepeatMode(repeatMode),
-            /* showRewindButton */showRewindButton,
-            /* showFastForwardButton */showFastForwardButton,
-            /* showPreviousButton */showPreviousButton,
-            /* showNextButton */showNextButton,
-            /* showShuffleButton */showShuffleButton,
-            /* showSubtitleButton */showSubtitlesButton,
-            /* showFullscreenButton */showFullscreenButton,
-            /* animationEnabled */animationEnabled
+
+        val playerStyle = PlayerStyle(
+            surfaceType = surfaceType,
+            useArtWork = useArtwork,
+            resizeMode = getResizeMode(resizeMode),
+            controlsTimeoutMs = controllerTimeout,
+            hideOnTouch = hideOnTouch,
+            autoShowController = autoShowController,
+            showBuffering = getBufferingMode(bufferingMode),
+            useController = useController,
+            rewindMs = rewindMs,
+            fastForwardMs = fastForwardMs,
+            repeatToggleModes = getRepeatMode(repeatMode),
+            showRewindButton = showRewindButton,
+            showFastForwardButton = showFastForwardButton,
+            showPreviousButton = showPreviousButton,
+            showNextButton = showNextButton,
+            showShuffleButton = showShuffleButton,
+            showSubtitleButton = showSubtitlesButton,
+            showFullscreenButton = showFullscreenButton,
+            showVideoSettingsButton = showVideoSettingsButton,
+            animationEnabled = animationEnabled,
+            timeBarMinUpdateIntervalMs = StyledPlayerControlView.DEFAULT_TIME_BAR_MIN_UPDATE_INTERVAL_MS,
+            hideAtMs = C.TIME_UNSET,
+            hideDuringAds = true
         )
 
-        val timeBarAttributes = TimeBarAttributes(
-            null,
-            trackHeight,
-            DefaultTimeBar.DEFAULT_TOUCH_TARGET_HEIGHT_DP,
-            Gravity.BOTTOM,
-            DefaultTimeBar.DEFAULT_AD_MARKER_WIDTH_DP,
-            thumbSize,
-            thumbSizeDisabled,
-            thumbSizeActive,
-            progressColor,
-            thumbColor,
-            bufferedColor,
-            trackColor,
-            DefaultTimeBar.DEFAULT_AD_MARKER_COLOR,
-            DefaultTimeBar.DEFAULT_PLAYED_AD_MARKER_COLOR
+        val progressBarStyle = ProgressBarStyle(
+            scrubberDrawable = null,
+            barHeight = trackHeight,
+            touchTargetHeight = DefaultTimeBar.DEFAULT_TOUCH_TARGET_HEIGHT_DP,
+            barGravity = DefaultTimeBar.BAR_GRAVITY_BOTTOM,
+            scrubberEnabledSize = thumbSize,
+            scrubberDisabledSize = thumbSizeDisabled,
+            scrubberDraggedSize = thumbSizeActive,
+            playedColor = progressColor,
+            scrubberColor = thumbColor,
+            bufferedColor = bufferedColor,
+            unPlayedColor = trackColor,
+            adMarkerColor = DefaultTimeBar.DEFAULT_AD_MARKER_COLOR,
+            playedAdMarkerColor = DefaultTimeBar.DEFAULT_PLAYED_AD_MARKER_COLOR,
+            adMarkerWidth = DefaultTimeBar.DEFAULT_AD_MARKER_WIDTH_DP
         )
 
         if (playerType == PlayerViewType.SimplePlayerView) {
-            playerView = PlayerView(context, timeBarAttributes, playerAttributes).also { view ->
+            playerView = PlayerView(context, playerStyle, progressBarStyle).also { view ->
                 view.player = exoPlayer
                 view.setKeepContentOnPlayerReset(true)
                 view.setControllerVisibilityListener {
@@ -202,7 +215,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
                 }
             }
         } else {
-            styledPlayerView = StyledPlayerView(context, timeBarAttributes, playerAttributes).also { view ->
+            styledPlayerView = StyledPlayerView(context, playerStyle, progressBarStyle).also { view ->
                 view.player = exoPlayer
                 view.setKeepContentOnPlayerReset(true)
                 view.setControllerVisibilityListener {
@@ -212,6 +225,8 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
                     view.setControllerOnFullScreenModeChangedListener {
                         OnFullscreenChanged(it)
                     }
+                view.setVideoSettingsButtonListener { OnVideoSettingsButtonClick() }
+                view.setControllerOnSettingsWindowDismissListener { OnSettingsWindowDismiss(it) }
             }
         }
 
@@ -237,6 +252,47 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
             if (playerType == PlayerViewType.SimplePlayerView) playerView else styledPlayerView,
             ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         )
+    }
+
+    private fun getRenderIndex(type: Int = C.TRACK_TYPE_VIDEO): Int? {
+        val trackInfo = trackSelector?.currentMappedTrackInfo
+        val renderCount = trackInfo?.rendererCount ?: 0
+        for (renderIndex in 0 until renderCount) {
+            val trackType: Int? = trackInfo?.getRendererType(renderIndex)
+            if (trackType == type) return renderIndex
+        }
+        return null
+    }
+
+    /**
+     * Returns whether a track selection dialog will have content to display if initialized with the
+     * specified [DefaultTrackSelector] in its current state.
+     */
+    private fun willHaveContent(trackSelector: DefaultTrackSelector, rendererIndex: Int): Boolean {
+        val mappedTrackInfo = trackSelector.currentMappedTrackInfo
+        return mappedTrackInfo != null && willHaveContent(mappedTrackInfo, rendererIndex)
+    }
+
+    /**
+     * Returns whether a track selection dialog will have content to display if initialized with the
+     * specified [MappedTrackInfo].
+     */
+    private fun willHaveContent(mappedTrackInfo: MappedTrackInfo, rendererIndex: Int): Boolean {
+        return hasTracks(mappedTrackInfo, rendererIndex)
+    }
+
+    private fun hasTracks(mappedTrackInfo: MappedTrackInfo, rendererIndex: Int): Boolean {
+        val trackGroupArray = mappedTrackInfo.getTrackGroups(rendererIndex)
+        if (trackGroupArray.length == 0) {
+            return false
+        }
+        val trackType = mappedTrackInfo.getRendererType(rendererIndex)
+        return isSupportedTrackType(trackType)
+    }
+
+    private fun isSupportedTrackType(trackType: Int): Boolean = when (trackType) {
+        C.TRACK_TYPE_VIDEO, C.TRACK_TYPE_AUDIO, C.TRACK_TYPE_TEXT -> true
+        else -> false
     }
 
     // Create Player View
@@ -277,9 +333,12 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     fun HideSystemUI() {
         val window = (context as Activity).window
         window.decorView.fitsSystemWindows = true
+        @Suppress("Deprecation")
         window.decorView.systemUiVisibility = (
                 View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                         // Hide the nav bar and status bar
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                         or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                         or View.SYSTEM_UI_FLAG_FULLSCREEN)
 
@@ -288,13 +347,58 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     @SimpleFunction(description = "Show System UI. Use with caution. Still in testing.")
     fun ShowSystemUI() {
         val window = (context as Activity).window
+        @Suppress("Deprecation")
         window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_VISIBLE)
     }
+
+    @SimpleFunction(description = "Show a dialog to override track selection.")
+    fun ShowSelectionDialog(
+        title: String,
+        trackType: Int,
+        showDisableOption: Boolean,
+        allowAdaptiveSelections: Boolean,
+        allowMultipleOverrides: Boolean
+    ) {
+        if (CanShowDialog(trackType)) {
+            val rendererIndex = getRenderIndex(trackType)
+            val trackNameProvider =
+                if (trackType == C.TRACK_TYPE_VIDEO) TrackNameProvider { format -> "${format.width} x ${format.height}" } else null
+            TrackSelectionDialogBuilder(context, title, trackSelector!!, rendererIndex!!)
+                .setShowDisableOption(showDisableOption)
+                .setAllowAdaptiveSelections(allowAdaptiveSelections)
+                .setAllowMultipleOverrides(allowMultipleOverrides)
+                .setTrackNameProvider(trackNameProvider)
+                .build()
+                .apply {
+                    setOnDismissListener { OnSettingsWindowDismiss(isFullscreen()) }
+                    show()
+                }
+        }
+    }
+
+    @SimpleFunction(description = "Check whether you can show a track selection dialog for given track type.")
+    fun CanShowDialog(trackType: Int): Boolean {
+        val rendererIndex = getRenderIndex(trackType)
+        return if (rendererIndex != null && trackSelector != null) willHaveContent(
+            trackSelector!!,
+            rendererIndex
+        ) else false
+    }
+
+    @SimpleProperty
+    fun TrackTypeVideo() = C.TRACK_TYPE_VIDEO
+
+    @SimpleProperty
+    fun TrackTypeAudio() = C.TRACK_TYPE_AUDIO
+
+    @SimpleProperty
+    fun TrackTypeText() = C.TRACK_TYPE_TEXT
 
     // Reassign Exoplayer Instance (Trying to fix player not working after screen off)
     @SimpleProperty(description = "Assign Exoplayer Instance")
     fun Player(exoplayer: Any?) {
         if (exoplayer != null && exoplayer is SimpleExoPlayer) {
+            this.exoPlayer = exoplayer
             if (playerType == PlayerViewType.SimplePlayerView)
                 playerView?.player = exoplayer
             else if (playerType == PlayerViewType.StyledPlayerView)
@@ -331,6 +435,21 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     fun OnFullscreenChanged(isFullScreen: Boolean) {
         EventDispatcher.dispatchEvent(this, "OnFullscreenChanged", isFullScreen)
     }
+
+    // On Video Settings Button Click
+    @SimpleEvent(description = "Event raised when video settings button is clicked.")
+    fun OnVideoSettingsButtonClick() {
+        EventDispatcher.dispatchEvent(this, "OnVideoSettingsButtonClick")
+    }
+
+    // On Settings Window Dismiss
+    @SimpleEvent(description = "Event raised when settings window or dialog is dismissed.")
+    fun OnSettingsWindowDismiss(isFullScreen: Boolean) {
+        EventDispatcher.dispatchEvent(this, "OnSettingsWindowDismiss", isFullScreen)
+    }
+
+    @SimpleProperty(description = "Check if player is in fullscreen mode.")
+    fun isFullscreen() = styledPlayerView?.isFullscreen ?: false
 
     // Set Repeat Mode
     @DesignerProperty(
@@ -420,7 +539,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
         showRewindButton = show
     }
 
-    // Show fast forward button
+    // Show fast-forward button
     @DesignerProperty(
         editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN,
         defaultValue = "True"
@@ -454,6 +573,17 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     @SimpleProperty(description = "Show/Hide fullscreen button.")
     fun FullscreenButtonVisible(show: Boolean) {
         showFullscreenButton = show
+    }
+
+    // Show video settings button
+    @DesignerProperty(
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN,
+        defaultValue = "True"
+    )
+    @SimpleProperty(description = "Show/Hide video settings button.")
+    fun VideoSettingsButtonVisible(show: Boolean) {
+        showVideoSettingsButton = show
+        styledPlayerView?.setShowVideoSettingsButton(show)
     }
 
     // Show Loading
@@ -701,12 +831,12 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
 
     // Subtitle Bottom Padding
     @DesignerProperty(
-        defaultValue = "14",
-        editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_FLOAT
+        defaultValue = "8",
+        editorType = PropertyTypeConstants.PROPERTY_TYPE_NON_NEGATIVE_INTEGER
     )
     @SimpleProperty(description = "Set subtitle bottom padding")
     fun SubtitleBottomPadding(padding: Float) {
-        subtitleBottomPadding = padding
+        subtitleBottomPadding = padding / 100
         subtitleView?.setBottomPaddingFraction(padding)
     }
 
@@ -884,7 +1014,7 @@ class ExoplayerUi(container: ComponentContainer) : AndroidNonvisibleComponent(co
     )
     @SimpleProperty(description = "Set surface type for player.")
     fun SurfaceType(type: String) {
-        Log.v(LOG_TAG,"SurfaceType | type: $type")
+        Log.v(LOG_TAG, "SurfaceType | type: $type")
         surfaceType = getSurfaceType(type)
     }
 

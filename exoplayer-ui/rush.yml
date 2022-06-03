@@ -4,10 +4,13 @@
 ---
 name: ExoplayerUi           # Caution: DO NOT change the name.
 description: A rewrite of exoplayer's ui library for app inventor.
+homepage: https://github.com/zainulhassan815/exoplayer-appinventor
+license: https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/main/exoplayer-ui/LICENSE
+min_sdk: 21
 
 version:
   number: auto        # Auto increments version number when built with '-r' ('--release') flag.
-  name: '1.0.4'
+  name: '2.0.0'
 
 authors:
   - Zain Ul Hassan

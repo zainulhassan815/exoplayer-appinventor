@@ -4,12 +4,13 @@
 ---
 name: ExoplayerCore           # Caution: DO NOT change the name.
 description: Google's Exoplayer For App Inventor and App Inventor Based Platforms.
+homepage: https://github.com/zainulhassan815/exoplayer-appinventor
+license: https://raw.githubusercontent.com/zainulhassan815/exoplayer-appinventor/main/exoplayer-core/LICENSE
+min_sdk: 21
 
 version:
   number: auto        # Auto increments version number when built with '-r' ('--release') flag.
-  name: '1.0.4'
-
-min_sdk: 16
+  name: '2.0.0'
 
 authors:
   - Zain Ul Hassan
@@ -46,5 +47,6 @@ deps:
   - failureaccess-1.0.1.jar
   - exoplayer-hls-2.14.1.jar
   - exoplayer-dash-2.14.1.jar
-  - playerview-1.0.4.jar
+  - playerview-1.0.6.jar
+  - R.jar
   - recyclerview-1.0.0.jar
